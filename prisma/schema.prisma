@@ -1,0 +1,199 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum AppointmentStatus {
+  AGENDADO
+  EM_ATENDIMENTO
+  CONCLUIDO
+  FALTOU
+  CANCELADO
+}
+
+enum PaymentMethod {
+  PIX
+  CREDITO
+  DEBITO
+  DINHEIRO
+}
+
+enum PaymentStatus {
+  PENDENTE
+  CONFIRMADO
+  ESTORNADO
+  CANCELADO
+}
+
+enum PaymentTiming {
+  PRESENCIAL_BALCAO
+  LIQUIDADO_AGORA
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  passwordSalt String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model AccessLog {
+  id         String   @id @default(cuid())
+  ip         String
+  userAgent  String
+  username   String?
+  authorized Boolean
+  reason     String
+  createdAt  DateTime @default(now())
+
+  @@index([authorized])
+  @@index([ip])
+  @@index([createdAt])
+}
+
+model Barber {
+  id              String           @id @default(cuid())
+  name            String
+  phone           String?
+  commissionRate  Decimal          @db.Decimal(5, 4)
+  active          Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  appointments    Appointment[]
+  commissionRecords CommissionRecord[]
+
+  @@index([active])
+}
+
+model Service {
+  id            String        @id @default(cuid())
+  name          String
+  description   String        @default("")
+  durationMin   Int
+  price         Decimal       @db.Decimal(10, 2)
+  active        Boolean       @default(true)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  appointmentItems AppointmentService[]
+
+  @@index([active])
+}
+
+model SubscriptionPlan {
+  id          String   @id @default(cuid())
+  name        String
+  description String   @default("")
+  price       Decimal  @db.Decimal(10, 2)
+  servicesPerMonth Int
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  customers   Customer[]
+
+  @@index([active])
+}
+
+model Customer {
+  id             String        @id @default(cuid())
+  name           String
+  phone          String        @unique
+  email          String?
+  notes          String        @default("")
+  subscriptionId String?
+  subscription   SubscriptionPlan? @relation(fields: [subscriptionId], references: [id])
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  appointments   Appointment[]
+
+  @@index([subscriptionId])
+  @@index([name])
+}
+
+model Appointment {
+  id                 String               @id @default(cuid())
+  customerId         String
+  customer           Customer             @relation(fields: [customerId], references: [id])
+  barberId           String
+  barber             Barber               @relation(fields: [barberId], references: [id])
+  scheduledAt        DateTime
+  endsAt             DateTime
+  status             AppointmentStatus    @default(AGENDADO)
+  notes              String               @default("")
+  noConversation     Boolean              @default(false)
+  paymentTiming      PaymentTiming        @default(PRESENCIAL_BALCAO)
+  whatsappReminderSentAt DateTime?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  services           AppointmentService[]
+  payments           PaymentTransaction[]
+  commissions        CommissionRecord[]
+
+  @@unique([barberId, scheduledAt, endsAt])
+  @@index([scheduledAt])
+  @@index([status])
+  @@index([barberId, scheduledAt])
+  @@index([customerId])
+}
+
+model AppointmentService {
+  appointmentId String
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  serviceId     String
+  service       Service     @relation(fields: [serviceId], references: [id])
+  quantity      Int         @default(1)
+  unitPrice     Decimal     @db.Decimal(10, 2)
+
+  @@id([appointmentId, serviceId])
+}
+
+model PaymentTransaction {
+  id                 String        @id @default(cuid())
+  appointmentId      String?
+  appointment        Appointment?  @relation(fields: [appointmentId], references: [id])
+  method             PaymentMethod
+  status             PaymentStatus @default(PENDENTE)
+  timing             PaymentTiming @default(PRESENCIAL_BALCAO)
+  grossAmount        Decimal       @db.Decimal(10, 2)
+  feeAmount          Decimal       @default(0) @db.Decimal(10, 2)
+  netAmount          Decimal       @db.Decimal(10, 2)
+  installments       Int           @default(1)
+  amountReceived     Decimal       @default(0) @db.Decimal(10, 2)
+  changeGiven        Decimal       @default(0) @db.Decimal(10, 2)
+  pixKey             String?
+  pixTxId            String?
+  cardAuthorization  String?
+  paidAt             DateTime?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  @@index([appointmentId])
+  @@index([method])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model CommissionRecord {
+  id            String      @id @default(cuid())
+  appointmentId String
+  appointment   Appointment @relation(fields: [appointmentId], references: [id])
+  barberId      String
+  barber        Barber      @relation(fields: [barberId], references: [id])
+  grossAmount   Decimal     @db.Decimal(10, 2)
+  commissionRate Decimal    @db.Decimal(5, 4)
+  commissionAmount Decimal  @db.Decimal(10, 2)
+  paid          Boolean     @default(false)
+  paidAt        DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([appointmentId, barberId])
+  @@index([barberId])
+  @@index([paid])
+  @@index([createdAt])
+}
