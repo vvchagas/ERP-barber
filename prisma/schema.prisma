@@ -91,10 +91,13 @@ model SubscriptionPlan {
   description String   @default("")
   price       Decimal  @db.Decimal(10, 2)
   servicesPerMonth Int
+  cutCredits  Int      @default(0)
+  beardCredits Int     @default(0)
   active      Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   customers   Customer[]
+  subscriptions CustomerSubscription[]
 
   @@index([active])
 }
@@ -104,15 +107,42 @@ model Customer {
   name           String
   phone          String        @unique
   email          String?
+  passwordHash   String?
+  passwordSalt   String?
   notes          String        @default("")
+  silentPreference Boolean     @default(false)
+  favoriteBarberId String?
+  theme          String        @default("light")
+  fontScale      Int           @default(100)
+  seniorMode     Boolean       @default(false)
+  lgpdConsentAt  DateTime?
+  anonymousHash  String?       @unique
   subscriptionId String?
   subscription   SubscriptionPlan? @relation(fields: [subscriptionId], references: [id])
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   appointments   Appointment[]
+  subscriptions  CustomerSubscription[]
 
   @@index([subscriptionId])
   @@index([name])
+}
+
+model CustomerSubscription {
+  id              String           @id @default(cuid())
+  customerId      String
+  customer        Customer         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  planId          String
+  plan            SubscriptionPlan @relation(fields: [planId], references: [id])
+  remainingCredits Int
+  startsAt        DateTime         @default(now())
+  expiresAt       DateTime
+  active          Boolean          @default(true)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([customerId, active])
+  @@index([expiresAt])
 }
 
 model Appointment {
@@ -168,6 +198,8 @@ model PaymentTransaction {
   pixKey             String?
   pixTxId            String?
   cardAuthorization  String?
+  gatewayProvider    String?
+  gatewayTransactionId String?
   paidAt             DateTime?
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt

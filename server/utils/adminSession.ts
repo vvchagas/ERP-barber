@@ -6,9 +6,9 @@ const COOKIE_NAME = "admin_session";
 const SESSION_SECONDS = 60 * 60 * 8;
 
 function secret(): string {
-  const value = process.env.ADMIN_SESSION_SECRET || process.env.MAGIC_KEY;
+  const value = process.env.ADMIN_SESSION_SECRET;
   if (!value || value.length < 32) {
-    throw new Error("ADMIN_SESSION_SECRET or MAGIC_KEY must contain at least 32 characters");
+    throw new Error("ADMIN_SESSION_SECRET must contain at least 32 characters");
   }
   return value;
 }
@@ -39,7 +39,12 @@ export function isAdminSessionValid(event: H3Event): boolean {
 
   const payload = token.slice(0, separator);
   const signature = token.slice(separator + 1);
-  const expected = sign(payload);
+  let expected: string;
+  try {
+    expected = sign(payload);
+  } catch {
+    return false;
+  }
   const signatureBuffer = Buffer.from(signature);
   const expectedBuffer = Buffer.from(expected);
   if (signatureBuffer.length !== expectedBuffer.length) return false;
@@ -67,4 +72,70 @@ export function requireAdminSession(event: H3Event): void {
 
 export function clearAdminSession(event: H3Event): void {
   deleteCookie(event, COOKIE_NAME, { path: "/" });
+}
+
+const CUSTOMER_COOKIE_NAME = "customer_session";
+const CUSTOMER_SESSION_SECONDS = 60 * 60 * 24 * 7;
+
+export function createCustomerSession(event: H3Event, phone: string): void {
+  const expiresAt = Math.floor(Date.now() / 1000) + CUSTOMER_SESSION_SECONDS;
+  const payload = Buffer.from(JSON.stringify({ phone, expiresAt })).toString("base64url");
+  const signature = sign(payload);
+  setCookie(event, CUSTOMER_COOKIE_NAME, `${payload}.${signature}`, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: CUSTOMER_SESSION_SECONDS,
+  });
+}
+
+export function isCustomerSessionValid(event: H3Event): boolean {
+  const token = getCookie(event, CUSTOMER_COOKIE_NAME);
+  if (!token) return false;
+  const separator = token.lastIndexOf(".");
+  if (separator <= 0) return false;
+  const payload = token.slice(0, separator);
+  const signature = token.slice(separator + 1);
+  let expected: string;
+  try {
+    expected = sign(payload);
+  } catch {
+    return false;
+  }
+  const signatureBuffer = Buffer.from(signature);
+  const expectedBuffer = Buffer.from(expected);
+  if (signatureBuffer.length !== expectedBuffer.length) return false;
+  if (!timingSafeEqual(signatureBuffer, expectedBuffer)) return false;
+  try {
+    const data = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as {
+      phone?: unknown;
+      expiresAt?: unknown;
+    };
+    return typeof data.phone === "string"
+      && typeof data.expiresAt === "number"
+      && data.expiresAt > Math.floor(Date.now() / 1000);
+  } catch {
+    return false;
+  }
+}
+
+export function getCustomerSessionPhone(event: H3Event): string | null {
+  if (!isCustomerSessionValid(event)) return null;
+  const token = getCookie(event, CUSTOMER_COOKIE_NAME);
+  if (!token) return null;
+  const separator = token.lastIndexOf(".");
+  if (separator <= 0) return null;
+  try {
+    const data = JSON.parse(
+      Buffer.from(token.slice(0, separator), "base64url").toString("utf8"),
+    ) as { phone?: unknown };
+    return typeof data.phone === "string" ? data.phone : null;
+  } catch {
+    return null;
+  }
+}
+
+export function clearCustomerSession(event: H3Event): void {
+  deleteCookie(event, CUSTOMER_COOKIE_NAME, { path: "/" });
 }

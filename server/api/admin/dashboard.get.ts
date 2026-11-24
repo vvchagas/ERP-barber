@@ -1,8 +1,10 @@
 import { prisma } from "../../utils/prisma";
 import { requireAdminSession } from "../../utils/adminSession";
+import { writeAccessLog } from "../../utils/accessLog";
 
 export default defineEventHandler(async (event) => {
   requireAdminSession(event);
+  await writeAccessLog(event, true, "dashboard_access", undefined);
   const [appointments, payments, commissions] = await Promise.all([
     prisma.appointment.findMany({
       include: { barber: true, services: { include: { service: true } } },

@@ -38,7 +38,7 @@ async function main(): Promise<void> {
     ["Corte masculino", "Corte completo com acabamento", 40, 45],
     ["Barba", "Barba alinhada e acabamento", 30, 35],
     ["Combo corte + barba", "Corte e barba com acabamento", 70, 70],
-    ["Platinado", "Descoloracao integral do cabelo", 180, 180],
+    ["Platinado", "Descoloração integral do cabelo", 180, 180],
   ] as const;
 
   for (const [name, description, durationMin, price] of services) {
@@ -57,13 +57,13 @@ async function main(): Promise<void> {
 
   await prisma.subscriptionPlan.upsert({
     where: { id: "plan-clube-vip-mensal" },
-    update: { name: "Clube VIP Mensal", description: "2 cortes por mes + barba", price: 149, servicesPerMonth: 2, active: true },
-    create: { id: "plan-clube-vip-mensal", name: "Clube VIP Mensal", description: "2 cortes por mes + barba", price: 149, servicesPerMonth: 2 },
+    update: { name: "Clube VIP Mensal", description: "2 cortes por mês", price: 149, servicesPerMonth: 2, cutCredits: 2, beardCredits: 0, active: true },
+    create: { id: "plan-clube-vip-mensal", name: "Clube VIP Mensal", description: "2 cortes por mês", price: 149, servicesPerMonth: 2, cutCredits: 2, beardCredits: 0 },
   });
   await prisma.subscriptionPlan.upsert({
     where: { id: "plan-clube-vip-premium" },
-    update: { name: "Clube VIP Premium", description: "4 cortes por mes + barba", price: 249, servicesPerMonth: 4, active: true },
-    create: { id: "plan-clube-vip-premium", name: "Clube VIP Premium", description: "4 cortes por mes + barba", price: 249, servicesPerMonth: 4 },
+    update: { name: "Clube VIP Premium", description: "4 cortes + 4 barbas por mês", price: 249, servicesPerMonth: 4, cutCredits: 4, beardCredits: 4, active: true },
+    create: { id: "plan-clube-vip-premium", name: "Clube VIP Premium", description: "4 cortes + 4 barbas por mês", price: 249, servicesPerMonth: 4, cutCredits: 4, beardCredits: 4 },
   });
 }
 

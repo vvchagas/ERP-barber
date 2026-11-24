@@ -57,6 +57,7 @@ export const ModelName = {
   Service: 'Service',
   SubscriptionPlan: 'SubscriptionPlan',
   Customer: 'Customer',
+  CustomerSubscription: 'CustomerSubscription',
   Appointment: 'Appointment',
   AppointmentService: 'AppointmentService',
   PaymentTransaction: 'PaymentTransaction',
@@ -137,6 +138,8 @@ export const SubscriptionPlanScalarFieldEnum = {
   description: 'description',
   price: 'price',
   servicesPerMonth: 'servicesPerMonth',
+  cutCredits: 'cutCredits',
+  beardCredits: 'beardCredits',
   active: 'active',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -150,13 +153,37 @@ export const CustomerScalarFieldEnum = {
   name: 'name',
   phone: 'phone',
   email: 'email',
+  passwordHash: 'passwordHash',
+  passwordSalt: 'passwordSalt',
   notes: 'notes',
+  silentPreference: 'silentPreference',
+  favoriteBarberId: 'favoriteBarberId',
+  theme: 'theme',
+  fontScale: 'fontScale',
+  seniorMode: 'seniorMode',
+  lgpdConsentAt: 'lgpdConsentAt',
+  anonymousHash: 'anonymousHash',
   subscriptionId: 'subscriptionId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
 export type CustomerScalarFieldEnum = (typeof CustomerScalarFieldEnum)[keyof typeof CustomerScalarFieldEnum]
+
+
+export const CustomerSubscriptionScalarFieldEnum = {
+  id: 'id',
+  customerId: 'customerId',
+  planId: 'planId',
+  remainingCredits: 'remainingCredits',
+  startsAt: 'startsAt',
+  expiresAt: 'expiresAt',
+  active: 'active',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CustomerSubscriptionScalarFieldEnum = (typeof CustomerSubscriptionScalarFieldEnum)[keyof typeof CustomerSubscriptionScalarFieldEnum]
 
 
 export const AppointmentScalarFieldEnum = {
@@ -202,6 +229,8 @@ export const PaymentTransactionScalarFieldEnum = {
   pixKey: 'pixKey',
   pixTxId: 'pixTxId',
   cardAuthorization: 'cardAuthorization',
+  gatewayProvider: 'gatewayProvider',
+  gatewayTransactionId: 'gatewayTransactionId',
   paidAt: 'paidAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

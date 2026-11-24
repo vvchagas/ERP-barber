@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { createHash, timingSafeEqual } from "node:crypto";
 import { prisma } from "../../utils/prisma";
 import { consumeRateLimit } from "../../utils/rateLimit";
 import { verifyPassword } from "../../utils/password";
@@ -10,6 +11,14 @@ const bodySchema = z.object({
   username: z.string().trim().min(1),
   password: z.string().min(1),
 });
+
+function safeMagicKeyMatches(value: string): boolean {
+  const expected = process.env.MAGIC_KEY;
+  if (!expected) return false;
+  const valueDigest = createHash("sha256").update(value).digest();
+  const expectedDigest = createHash("sha256").update(expected).digest();
+  return timingSafeEqual(valueDigest, expectedDigest);
+}
 
 export default defineEventHandler(async (event) => {
   const ip = getRequestIP(event) || "unknown";
@@ -26,7 +35,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: "Dados inválidos" });
   }
 
-  if (parsed.data.magicKey !== process.env.MAGIC_KEY) {
+  if (!safeMagicKeyMatches(parsed.data.magicKey)) {
     await writeAccessLog(event, false, "invalid_magic_key", parsed.data.username);
     throw createError({ statusCode: 401, statusMessage: "Credenciais inválidas" });
   }

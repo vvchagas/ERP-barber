@@ -34,6 +34,7 @@ export default {
       },
       minHeight: {
         touch: "48px",
+        senior: "60px",
       },
       fontSize: {
         base: ["16px", "24px"],

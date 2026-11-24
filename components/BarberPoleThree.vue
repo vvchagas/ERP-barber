@@ -2,6 +2,7 @@
 import * as THREE from "three";
 
 const host = ref<HTMLDivElement | null>(null);
+let cleanup: (() => void) | null = null;
 
 onMounted(() => {
   if (!host.value) return;
@@ -33,7 +34,7 @@ onMounted(() => {
 
   const top = new THREE.Mesh(
     new THREE.CylinderGeometry(0.9, 0.9, 0.16, 32),
-    new THREE.MeshBasicMaterial({ color: "#EA580C" }),
+    new THREE.MeshBasicMaterial({ color: "#F59E0B" }),
   );
   top.position.y = 1.83;
   pole.add(top);
@@ -55,7 +56,8 @@ onMounted(() => {
   const resizeObserver = new ResizeObserver(resize);
   resizeObserver.observe(host.value);
 
-  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    || document.documentElement.classList.contains("senior-mode");
   let frameId = 0;
   const animate = () => {
     if (!reducedMotion) pole.rotation.y += 0.012;
@@ -64,17 +66,22 @@ onMounted(() => {
   };
   animate();
 
-  onBeforeUnmount(() => {
+  cleanup = () => {
     window.cancelAnimationFrame(frameId);
     resizeObserver.disconnect();
     renderer.dispose();
     renderer.domElement.remove();
-  });
+  };
+});
+
+onBeforeUnmount(() => {
+  cleanup?.();
+  cleanup = null;
 });
 </script>
 
 <template>
   <ClientOnly>
-    <div ref="host" class="h-[360px] w-full" aria-label="Animação 3D de poste de barbearia" />
+    <div ref="host" class="h-90 w-full" aria-label="Animação 3D de poste de barbearia" />
   </ClientOnly>
 </template>

@@ -403,6 +403,7 @@ export const ModelName = {
   Service: 'Service',
   SubscriptionPlan: 'SubscriptionPlan',
   Customer: 'Customer',
+  CustomerSubscription: 'CustomerSubscription',
   Appointment: 'Appointment',
   AppointmentService: 'AppointmentService',
   PaymentTransaction: 'PaymentTransaction',
@@ -422,7 +423,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "adminUser" | "accessLog" | "barber" | "service" | "subscriptionPlan" | "customer" | "appointment" | "appointmentService" | "paymentTransaction" | "commissionRecord"
+    modelProps: "adminUser" | "accessLog" | "barber" | "service" | "subscriptionPlan" | "customer" | "customerSubscription" | "appointment" | "appointmentService" | "paymentTransaction" | "commissionRecord"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -870,6 +871,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    CustomerSubscription: {
+      payload: Prisma.$CustomerSubscriptionPayload<ExtArgs>
+      fields: Prisma.CustomerSubscriptionFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CustomerSubscriptionFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerSubscriptionPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CustomerSubscriptionFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerSubscriptionPayload>
+        }
+        findFirst: {
+          args: Prisma.CustomerSubscriptionFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerSubscriptionPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CustomerSubscriptionFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerSubscriptionPayload>
+        }
+        findMany: {
+          args: Prisma.CustomerSubscriptionFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerSubscriptionPayload>[]
+        }
+        create: {
+          args: Prisma.CustomerSubscriptionCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerSubscriptionPayload>
+        }
+        createMany: {
+          args: Prisma.CustomerSubscriptionCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.CustomerSubscriptionCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerSubscriptionPayload>[]
+        }
+        delete: {
+          args: Prisma.CustomerSubscriptionDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerSubscriptionPayload>
+        }
+        update: {
+          args: Prisma.CustomerSubscriptionUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerSubscriptionPayload>
+        }
+        deleteMany: {
+          args: Prisma.CustomerSubscriptionDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CustomerSubscriptionUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.CustomerSubscriptionUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerSubscriptionPayload>[]
+        }
+        upsert: {
+          args: Prisma.CustomerSubscriptionUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomerSubscriptionPayload>
+        }
+        aggregate: {
+          args: Prisma.CustomerSubscriptionAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCustomerSubscription>
+        }
+        groupBy: {
+          args: Prisma.CustomerSubscriptionGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CustomerSubscriptionGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CustomerSubscriptionCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CustomerSubscriptionCountAggregateOutputType> | number
+        }
+      }
+    }
     Appointment: {
       payload: Prisma.$AppointmentPayload<ExtArgs>
       fields: Prisma.AppointmentFieldRefs
@@ -1263,6 +1338,8 @@ export const SubscriptionPlanScalarFieldEnum = {
   description: 'description',
   price: 'price',
   servicesPerMonth: 'servicesPerMonth',
+  cutCredits: 'cutCredits',
+  beardCredits: 'beardCredits',
   active: 'active',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -1276,13 +1353,37 @@ export const CustomerScalarFieldEnum = {
   name: 'name',
   phone: 'phone',
   email: 'email',
+  passwordHash: 'passwordHash',
+  passwordSalt: 'passwordSalt',
   notes: 'notes',
+  silentPreference: 'silentPreference',
+  favoriteBarberId: 'favoriteBarberId',
+  theme: 'theme',
+  fontScale: 'fontScale',
+  seniorMode: 'seniorMode',
+  lgpdConsentAt: 'lgpdConsentAt',
+  anonymousHash: 'anonymousHash',
   subscriptionId: 'subscriptionId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
 export type CustomerScalarFieldEnum = (typeof CustomerScalarFieldEnum)[keyof typeof CustomerScalarFieldEnum]
+
+
+export const CustomerSubscriptionScalarFieldEnum = {
+  id: 'id',
+  customerId: 'customerId',
+  planId: 'planId',
+  remainingCredits: 'remainingCredits',
+  startsAt: 'startsAt',
+  expiresAt: 'expiresAt',
+  active: 'active',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CustomerSubscriptionScalarFieldEnum = (typeof CustomerSubscriptionScalarFieldEnum)[keyof typeof CustomerSubscriptionScalarFieldEnum]
 
 
 export const AppointmentScalarFieldEnum = {
@@ -1328,6 +1429,8 @@ export const PaymentTransactionScalarFieldEnum = {
   pixKey: 'pixKey',
   pixTxId: 'pixTxId',
   cardAuthorization: 'cardAuthorization',
+  gatewayProvider: 'gatewayProvider',
+  gatewayTransactionId: 'gatewayTransactionId',
   paidAt: 'paidAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -1671,6 +1774,7 @@ export type GlobalOmitConfig = {
   service?: Prisma.ServiceOmit
   subscriptionPlan?: Prisma.SubscriptionPlanOmit
   customer?: Prisma.CustomerOmit
+  customerSubscription?: Prisma.CustomerSubscriptionOmit
   appointment?: Prisma.AppointmentOmit
   appointmentService?: Prisma.AppointmentServiceOmit
   paymentTransaction?: Prisma.PaymentTransactionOmit

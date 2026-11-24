@@ -13,8 +13,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: "Parâmetros de disponibilidade inválidos" });
   }
 
-  const day = new Date(`${parsed.data.date}T09:00:00`);
-  if (day.getTime() < Date.now()) {
+  const day = new Date(`${parsed.data.date}T00:00:00-03:00`);
+  if (Number.isNaN(day.getTime()) || day.getTime() <= Date.now() || day.getDay() === 0) {
     return [];
   }
   const barber = await prisma.barber.findFirst({
@@ -22,22 +22,23 @@ export default defineEventHandler(async (event) => {
     select: { id: true },
   });
   if (!barber) return [];
-  const nextDay = new Date(day);
-  nextDay.setDate(nextDay.getDate() + 1);
+  const nextDayUtc = new Date(day);
+  nextDayUtc.setDate(nextDayUtc.getDate() + 1);
 
   const appointments = await prisma.appointment.findMany({
     where: {
       barberId: parsed.data.barberId,
-      scheduledAt: { gte: day, lt: nextDay },
+      scheduledAt: { gte: day, lt: nextDayUtc },
       status: { in: ["AGENDADO", "EM_ATENDIMENTO"] },
     },
     select: { scheduledAt: true, endsAt: true },
   });
 
   const slots: string[] = [];
-  for (let minutes = 9 * 60; minutes < 19 * 60; minutes += 30) {
-    const start = new Date(day);
-    start.setMinutes(minutes);
+  for (let minutes = 8 * 60; minutes < 19 * 60; minutes += 30) {
+    const hour = Math.floor(minutes / 60);
+    const minute = minutes % 60;
+    const start = new Date(`${parsed.data.date}T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00-03:00`);
     const end = new Date(start.getTime() + parsed.data.duration * 60_000);
     if (start.getTime() <= Date.now() || minutes + parsed.data.duration > 19 * 60) continue;
 

@@ -19,6 +19,7 @@ const method = ref<PaymentMethod>("PIX");
 const installments = ref(1);
 const amountReceived = ref<number | null>(null);
 const grossAmount = ref(0);
+const busy = ref(false);
 const timing = ref<"PRESENCIAL_BALCAO" | "LIQUIDADO_AGORA">("LIQUIDADO_AGORA");
 const pixKey = ref("00020126330014br.gov.bcb.pix");
 const message = ref("");
@@ -57,6 +58,8 @@ async function confirmPayment(): Promise<void> {
     message.value = "Valor recebido insuficiente.";
     return;
   }
+  if (busy.value) return;
+  busy.value = true;
   try {
     await $fetch("/api/payments/checkout", {
       method: "POST",
@@ -74,6 +77,8 @@ async function confirmPayment(): Promise<void> {
     await refreshNuxtData();
   } catch (error: unknown) {
     message.value = error instanceof Error ? error.message : "Não foi possível registrar o pagamento.";
+  } finally {
+    busy.value = false;
   }
 }
 </script>
@@ -151,8 +156,8 @@ async function confirmPayment(): Promise<void> {
           <p class="mt-3 flex justify-between"><span>Taxas</span><strong>R$ {{ fee.toFixed(2) }}</strong></p>
           <p class="mt-3 flex justify-between border-t-2 border-white pt-3"><span>Líquido</span><strong>R$ {{ net.toFixed(2) }}</strong></p>
           <p v-if="method === 'DINHEIRO'" class="mt-3 flex justify-between"><span>Troco</span><strong>R$ {{ change.toFixed(2) }}</strong></p>
-          <button type="button" class="mt-6 min-h-14 w-full border-2 border-white bg-[#F59E0B] px-4 font-black text-[#09090B] shadow-[4px_4px_0px_#FFFFFF]" @click="confirmPayment">
-            CONFIRMAR PAGAMENTO
+          <button type="button" class="mt-6 min-h-14 w-full border-2 border-white bg-[#F59E0B] px-4 font-black text-[#09090B] shadow-[4px_4px_0px_#FFFFFF]" :disabled="busy" @click="confirmPayment">
+            {{ busy ? "PROCESSANDO..." : "CONFIRMAR PAGAMENTO" }}
           </button>
           <p v-if="message" role="status" class="mt-4 border-2 border-white bg-[#18181B] p-3 font-bold">{{ message }}</p>
         </aside>

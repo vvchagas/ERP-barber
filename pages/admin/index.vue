@@ -15,7 +15,7 @@ interface AppointmentRow {
   id: string;
   scheduledAt: string;
   status: "AGENDADO" | "EM_ATENDIMENTO" | "CONCLUIDO" | "FALTOU" | "CANCELADO";
-  customer: { name: string };
+  customer: { id: string; name: string };
   barber: { name: string };
 }
 
@@ -39,6 +39,11 @@ async function setStatus(id: string, status: AppointmentRow["status"]): Promise<
 async function logout(): Promise<void> {
   await $fetch("/api/admin/logout", { method: "POST" });
   await navigateTo("/admin/login");
+}
+
+async function anonymizeCustomer(customerId: string): Promise<void> {
+  await $fetch(`/api/admin/customers/${customerId}/anonymize`, { method: "POST" });
+  await refresh();
 }
 </script>
 
@@ -89,13 +94,13 @@ async function logout(): Promise<void> {
       <section class="mt-8 border-2 border-[#09090B] bg-white p-5 shadow-[8px_8px_0px_#09090B]">
         <h2 class="text-2xl font-black">GESTÃO DA AGENDA</h2>
         <div class="mt-4 overflow-x-auto">
-          <table class="w-full min-w-[760px] border-collapse text-left">
+          <table class="w-full min-w-190 border-collapse text-left">
             <thead><tr class="border-b-2 border-[#09090B]"><th class="p-3">Cliente</th><th class="p-3">Barbeiro</th><th class="p-3">Data</th><th class="p-3">Status</th><th class="p-3">Ação</th></tr></thead>
             <tbody>
               <tr v-for="appointment in appointments" :key="appointment.id" class="border-b-2 border-[#09090B]">
                 <td class="p-3 font-bold">{{ appointment.customer.name }}</td>
                 <td class="p-3">{{ appointment.barber.name }}</td>
-                <td class="p-3">{{ new Date(appointment.scheduledAt).toLocaleString("pt-BR") }}</td>
+                <td class="p-3">{{ new Date(appointment.scheduledAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) }}</td>
                 <td class="p-3 font-black">{{ appointment.status }}</td>
                 <td class="p-3">
                   <select class="min-h-12 border-2 border-[#09090B] px-2" :disabled="busyId === appointment.id" :value="appointment.status" @change="setStatus(appointment.id, ($event.target as HTMLSelectElement).value as AppointmentRow['status'])">
@@ -105,6 +110,7 @@ async function logout(): Promise<void> {
                     <option value="FALTOU">FALTOU</option>
                     <option value="CANCELADO">CANCELADO</option>
                   </select>
+                  <button type="button" class="mt-2 block min-h-12 border-2 border-[#09090B] bg-white px-3 font-black" @click="anonymizeCustomer(appointment.customer.id)">Anonimizar cliente</button>
                 </td>
               </tr>
             </tbody>

@@ -20,8 +20,18 @@ export type CustomerModel = runtime.Types.Result.DefaultSelection<Prisma.$Custom
 
 export type AggregateCustomer = {
   _count: CustomerCountAggregateOutputType | null
+  _avg: CustomerAvgAggregateOutputType | null
+  _sum: CustomerSumAggregateOutputType | null
   _min: CustomerMinAggregateOutputType | null
   _max: CustomerMaxAggregateOutputType | null
+}
+
+export type CustomerAvgAggregateOutputType = {
+  fontScale: number | null
+}
+
+export type CustomerSumAggregateOutputType = {
+  fontScale: number | null
 }
 
 export type CustomerMinAggregateOutputType = {
@@ -29,7 +39,16 @@ export type CustomerMinAggregateOutputType = {
   name: string | null
   phone: string | null
   email: string | null
+  passwordHash: string | null
+  passwordSalt: string | null
   notes: string | null
+  silentPreference: boolean | null
+  favoriteBarberId: string | null
+  theme: string | null
+  fontScale: number | null
+  seniorMode: boolean | null
+  lgpdConsentAt: Date | null
+  anonymousHash: string | null
   subscriptionId: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -40,7 +59,16 @@ export type CustomerMaxAggregateOutputType = {
   name: string | null
   phone: string | null
   email: string | null
+  passwordHash: string | null
+  passwordSalt: string | null
   notes: string | null
+  silentPreference: boolean | null
+  favoriteBarberId: string | null
+  theme: string | null
+  fontScale: number | null
+  seniorMode: boolean | null
+  lgpdConsentAt: Date | null
+  anonymousHash: string | null
   subscriptionId: string | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -51,7 +79,16 @@ export type CustomerCountAggregateOutputType = {
   name: number
   phone: number
   email: number
+  passwordHash: number
+  passwordSalt: number
   notes: number
+  silentPreference: number
+  favoriteBarberId: number
+  theme: number
+  fontScale: number
+  seniorMode: number
+  lgpdConsentAt: number
+  anonymousHash: number
   subscriptionId: number
   createdAt: number
   updatedAt: number
@@ -59,12 +96,29 @@ export type CustomerCountAggregateOutputType = {
 }
 
 
+export type CustomerAvgAggregateInputType = {
+  fontScale?: true
+}
+
+export type CustomerSumAggregateInputType = {
+  fontScale?: true
+}
+
 export type CustomerMinAggregateInputType = {
   id?: true
   name?: true
   phone?: true
   email?: true
+  passwordHash?: true
+  passwordSalt?: true
   notes?: true
+  silentPreference?: true
+  favoriteBarberId?: true
+  theme?: true
+  fontScale?: true
+  seniorMode?: true
+  lgpdConsentAt?: true
+  anonymousHash?: true
   subscriptionId?: true
   createdAt?: true
   updatedAt?: true
@@ -75,7 +129,16 @@ export type CustomerMaxAggregateInputType = {
   name?: true
   phone?: true
   email?: true
+  passwordHash?: true
+  passwordSalt?: true
   notes?: true
+  silentPreference?: true
+  favoriteBarberId?: true
+  theme?: true
+  fontScale?: true
+  seniorMode?: true
+  lgpdConsentAt?: true
+  anonymousHash?: true
   subscriptionId?: true
   createdAt?: true
   updatedAt?: true
@@ -86,7 +149,16 @@ export type CustomerCountAggregateInputType = {
   name?: true
   phone?: true
   email?: true
+  passwordHash?: true
+  passwordSalt?: true
   notes?: true
+  silentPreference?: true
+  favoriteBarberId?: true
+  theme?: true
+  fontScale?: true
+  seniorMode?: true
+  lgpdConsentAt?: true
+  anonymousHash?: true
   subscriptionId?: true
   createdAt?: true
   updatedAt?: true
@@ -131,6 +203,18 @@ export type CustomerAggregateArgs<ExtArgs extends runtime.Types.Extensions.Inter
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
+   * Select which fields to average
+  **/
+  _avg?: CustomerAvgAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
+   * Select which fields to sum
+  **/
+  _sum?: CustomerSumAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
    * Select which fields to find the minimum value
   **/
   _min?: CustomerMinAggregateInputType
@@ -161,6 +245,8 @@ export type CustomerGroupByArgs<ExtArgs extends runtime.Types.Extensions.Interna
   take?: number
   skip?: number
   _count?: CustomerCountAggregateInputType | true
+  _avg?: CustomerAvgAggregateInputType
+  _sum?: CustomerSumAggregateInputType
   _min?: CustomerMinAggregateInputType
   _max?: CustomerMaxAggregateInputType
 }
@@ -170,11 +256,22 @@ export type CustomerGroupByOutputType = {
   name: string
   phone: string
   email: string | null
+  passwordHash: string | null
+  passwordSalt: string | null
   notes: string
+  silentPreference: boolean
+  favoriteBarberId: string | null
+  theme: string
+  fontScale: number
+  seniorMode: boolean
+  lgpdConsentAt: Date | null
+  anonymousHash: string | null
   subscriptionId: string | null
   createdAt: Date
   updatedAt: Date
   _count: CustomerCountAggregateOutputType | null
+  _avg: CustomerAvgAggregateOutputType | null
+  _sum: CustomerSumAggregateOutputType | null
   _min: CustomerMinAggregateOutputType | null
   _max: CustomerMaxAggregateOutputType | null
 }
@@ -202,12 +299,22 @@ export type CustomerWhereInput = {
   name?: Prisma.StringFilter<"Customer"> | string
   phone?: Prisma.StringFilter<"Customer"> | string
   email?: Prisma.StringNullableFilter<"Customer"> | string | null
+  passwordHash?: Prisma.StringNullableFilter<"Customer"> | string | null
+  passwordSalt?: Prisma.StringNullableFilter<"Customer"> | string | null
   notes?: Prisma.StringFilter<"Customer"> | string
+  silentPreference?: Prisma.BoolFilter<"Customer"> | boolean
+  favoriteBarberId?: Prisma.StringNullableFilter<"Customer"> | string | null
+  theme?: Prisma.StringFilter<"Customer"> | string
+  fontScale?: Prisma.IntFilter<"Customer"> | number
+  seniorMode?: Prisma.BoolFilter<"Customer"> | boolean
+  lgpdConsentAt?: Prisma.DateTimeNullableFilter<"Customer"> | Date | string | null
+  anonymousHash?: Prisma.StringNullableFilter<"Customer"> | string | null
   subscriptionId?: Prisma.StringNullableFilter<"Customer"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Customer"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Customer"> | Date | string
   subscription?: Prisma.XOR<Prisma.SubscriptionPlanNullableScalarRelationFilter, Prisma.SubscriptionPlanWhereInput> | null
   appointments?: Prisma.AppointmentListRelationFilter
+  subscriptions?: Prisma.CustomerSubscriptionListRelationFilter
 }
 
 export type CustomerOrderByWithRelationInput = {
@@ -215,42 +322,73 @@ export type CustomerOrderByWithRelationInput = {
   name?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   email?: Prisma.SortOrderInput | Prisma.SortOrder
+  passwordHash?: Prisma.SortOrderInput | Prisma.SortOrder
+  passwordSalt?: Prisma.SortOrderInput | Prisma.SortOrder
   notes?: Prisma.SortOrder
+  silentPreference?: Prisma.SortOrder
+  favoriteBarberId?: Prisma.SortOrderInput | Prisma.SortOrder
+  theme?: Prisma.SortOrder
+  fontScale?: Prisma.SortOrder
+  seniorMode?: Prisma.SortOrder
+  lgpdConsentAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  anonymousHash?: Prisma.SortOrderInput | Prisma.SortOrder
   subscriptionId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   subscription?: Prisma.SubscriptionPlanOrderByWithRelationInput
   appointments?: Prisma.AppointmentOrderByRelationAggregateInput
+  subscriptions?: Prisma.CustomerSubscriptionOrderByRelationAggregateInput
 }
 
 export type CustomerWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   phone?: string
+  anonymousHash?: string
   AND?: Prisma.CustomerWhereInput | Prisma.CustomerWhereInput[]
   OR?: Prisma.CustomerWhereInput[]
   NOT?: Prisma.CustomerWhereInput | Prisma.CustomerWhereInput[]
   name?: Prisma.StringFilter<"Customer"> | string
   email?: Prisma.StringNullableFilter<"Customer"> | string | null
+  passwordHash?: Prisma.StringNullableFilter<"Customer"> | string | null
+  passwordSalt?: Prisma.StringNullableFilter<"Customer"> | string | null
   notes?: Prisma.StringFilter<"Customer"> | string
+  silentPreference?: Prisma.BoolFilter<"Customer"> | boolean
+  favoriteBarberId?: Prisma.StringNullableFilter<"Customer"> | string | null
+  theme?: Prisma.StringFilter<"Customer"> | string
+  fontScale?: Prisma.IntFilter<"Customer"> | number
+  seniorMode?: Prisma.BoolFilter<"Customer"> | boolean
+  lgpdConsentAt?: Prisma.DateTimeNullableFilter<"Customer"> | Date | string | null
   subscriptionId?: Prisma.StringNullableFilter<"Customer"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Customer"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Customer"> | Date | string
   subscription?: Prisma.XOR<Prisma.SubscriptionPlanNullableScalarRelationFilter, Prisma.SubscriptionPlanWhereInput> | null
   appointments?: Prisma.AppointmentListRelationFilter
-}, "id" | "phone">
+  subscriptions?: Prisma.CustomerSubscriptionListRelationFilter
+}, "id" | "phone" | "anonymousHash">
 
 export type CustomerOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   email?: Prisma.SortOrderInput | Prisma.SortOrder
+  passwordHash?: Prisma.SortOrderInput | Prisma.SortOrder
+  passwordSalt?: Prisma.SortOrderInput | Prisma.SortOrder
   notes?: Prisma.SortOrder
+  silentPreference?: Prisma.SortOrder
+  favoriteBarberId?: Prisma.SortOrderInput | Prisma.SortOrder
+  theme?: Prisma.SortOrder
+  fontScale?: Prisma.SortOrder
+  seniorMode?: Prisma.SortOrder
+  lgpdConsentAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  anonymousHash?: Prisma.SortOrderInput | Prisma.SortOrder
   subscriptionId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.CustomerCountOrderByAggregateInput
+  _avg?: Prisma.CustomerAvgOrderByAggregateInput
   _max?: Prisma.CustomerMaxOrderByAggregateInput
   _min?: Prisma.CustomerMinOrderByAggregateInput
+  _sum?: Prisma.CustomerSumOrderByAggregateInput
 }
 
 export type CustomerScalarWhereWithAggregatesInput = {
@@ -261,7 +399,16 @@ export type CustomerScalarWhereWithAggregatesInput = {
   name?: Prisma.StringWithAggregatesFilter<"Customer"> | string
   phone?: Prisma.StringWithAggregatesFilter<"Customer"> | string
   email?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
+  passwordHash?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
+  passwordSalt?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
   notes?: Prisma.StringWithAggregatesFilter<"Customer"> | string
+  silentPreference?: Prisma.BoolWithAggregatesFilter<"Customer"> | boolean
+  favoriteBarberId?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
+  theme?: Prisma.StringWithAggregatesFilter<"Customer"> | string
+  fontScale?: Prisma.IntWithAggregatesFilter<"Customer"> | number
+  seniorMode?: Prisma.BoolWithAggregatesFilter<"Customer"> | boolean
+  lgpdConsentAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Customer"> | Date | string | null
+  anonymousHash?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
   subscriptionId?: Prisma.StringNullableWithAggregatesFilter<"Customer"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Customer"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Customer"> | Date | string
@@ -272,11 +419,21 @@ export type CustomerCreateInput = {
   name: string
   phone: string
   email?: string | null
+  passwordHash?: string | null
+  passwordSalt?: string | null
   notes?: string
+  silentPreference?: boolean
+  favoriteBarberId?: string | null
+  theme?: string
+  fontScale?: number
+  seniorMode?: boolean
+  lgpdConsentAt?: Date | string | null
+  anonymousHash?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   subscription?: Prisma.SubscriptionPlanCreateNestedOneWithoutCustomersInput
   appointments?: Prisma.AppointmentCreateNestedManyWithoutCustomerInput
+  subscriptions?: Prisma.CustomerSubscriptionCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateInput = {
@@ -284,11 +441,21 @@ export type CustomerUncheckedCreateInput = {
   name: string
   phone: string
   email?: string | null
+  passwordHash?: string | null
+  passwordSalt?: string | null
   notes?: string
+  silentPreference?: boolean
+  favoriteBarberId?: string | null
+  theme?: string
+  fontScale?: number
+  seniorMode?: boolean
+  lgpdConsentAt?: Date | string | null
+  anonymousHash?: string | null
   subscriptionId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   appointments?: Prisma.AppointmentUncheckedCreateNestedManyWithoutCustomerInput
+  subscriptions?: Prisma.CustomerSubscriptionUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUpdateInput = {
@@ -296,11 +463,21 @@ export type CustomerUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordSalt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notes?: Prisma.StringFieldUpdateOperationsInput | string
+  silentPreference?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  favoriteBarberId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  theme?: Prisma.StringFieldUpdateOperationsInput | string
+  fontScale?: Prisma.IntFieldUpdateOperationsInput | number
+  seniorMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lgpdConsentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  anonymousHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   subscription?: Prisma.SubscriptionPlanUpdateOneWithoutCustomersNestedInput
   appointments?: Prisma.AppointmentUpdateManyWithoutCustomerNestedInput
+  subscriptions?: Prisma.CustomerSubscriptionUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateInput = {
@@ -308,11 +485,21 @@ export type CustomerUncheckedUpdateInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordSalt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notes?: Prisma.StringFieldUpdateOperationsInput | string
+  silentPreference?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  favoriteBarberId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  theme?: Prisma.StringFieldUpdateOperationsInput | string
+  fontScale?: Prisma.IntFieldUpdateOperationsInput | number
+  seniorMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lgpdConsentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  anonymousHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subscriptionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   appointments?: Prisma.AppointmentUncheckedUpdateManyWithoutCustomerNestedInput
+  subscriptions?: Prisma.CustomerSubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerCreateManyInput = {
@@ -320,7 +507,16 @@ export type CustomerCreateManyInput = {
   name: string
   phone: string
   email?: string | null
+  passwordHash?: string | null
+  passwordSalt?: string | null
   notes?: string
+  silentPreference?: boolean
+  favoriteBarberId?: string | null
+  theme?: string
+  fontScale?: number
+  seniorMode?: boolean
+  lgpdConsentAt?: Date | string | null
+  anonymousHash?: string | null
   subscriptionId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -331,7 +527,16 @@ export type CustomerUpdateManyMutationInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordSalt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notes?: Prisma.StringFieldUpdateOperationsInput | string
+  silentPreference?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  favoriteBarberId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  theme?: Prisma.StringFieldUpdateOperationsInput | string
+  fontScale?: Prisma.IntFieldUpdateOperationsInput | number
+  seniorMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lgpdConsentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  anonymousHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -341,7 +546,16 @@ export type CustomerUncheckedUpdateManyInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordSalt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notes?: Prisma.StringFieldUpdateOperationsInput | string
+  silentPreference?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  favoriteBarberId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  theme?: Prisma.StringFieldUpdateOperationsInput | string
+  fontScale?: Prisma.IntFieldUpdateOperationsInput | number
+  seniorMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lgpdConsentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  anonymousHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subscriptionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -362,10 +576,23 @@ export type CustomerCountOrderByAggregateInput = {
   name?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  passwordHash?: Prisma.SortOrder
+  passwordSalt?: Prisma.SortOrder
   notes?: Prisma.SortOrder
+  silentPreference?: Prisma.SortOrder
+  favoriteBarberId?: Prisma.SortOrder
+  theme?: Prisma.SortOrder
+  fontScale?: Prisma.SortOrder
+  seniorMode?: Prisma.SortOrder
+  lgpdConsentAt?: Prisma.SortOrder
+  anonymousHash?: Prisma.SortOrder
   subscriptionId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type CustomerAvgOrderByAggregateInput = {
+  fontScale?: Prisma.SortOrder
 }
 
 export type CustomerMaxOrderByAggregateInput = {
@@ -373,7 +600,16 @@ export type CustomerMaxOrderByAggregateInput = {
   name?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  passwordHash?: Prisma.SortOrder
+  passwordSalt?: Prisma.SortOrder
   notes?: Prisma.SortOrder
+  silentPreference?: Prisma.SortOrder
+  favoriteBarberId?: Prisma.SortOrder
+  theme?: Prisma.SortOrder
+  fontScale?: Prisma.SortOrder
+  seniorMode?: Prisma.SortOrder
+  lgpdConsentAt?: Prisma.SortOrder
+  anonymousHash?: Prisma.SortOrder
   subscriptionId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -384,10 +620,23 @@ export type CustomerMinOrderByAggregateInput = {
   name?: Prisma.SortOrder
   phone?: Prisma.SortOrder
   email?: Prisma.SortOrder
+  passwordHash?: Prisma.SortOrder
+  passwordSalt?: Prisma.SortOrder
   notes?: Prisma.SortOrder
+  silentPreference?: Prisma.SortOrder
+  favoriteBarberId?: Prisma.SortOrder
+  theme?: Prisma.SortOrder
+  fontScale?: Prisma.SortOrder
+  seniorMode?: Prisma.SortOrder
+  lgpdConsentAt?: Prisma.SortOrder
+  anonymousHash?: Prisma.SortOrder
   subscriptionId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type CustomerSumOrderByAggregateInput = {
+  fontScale?: Prisma.SortOrder
 }
 
 export type CustomerScalarRelationFilter = {
@@ -437,6 +686,24 @@ export type CustomerUncheckedUpdateManyWithoutSubscriptionNestedInput = {
   deleteMany?: Prisma.CustomerScalarWhereInput | Prisma.CustomerScalarWhereInput[]
 }
 
+export type NullableDateTimeFieldUpdateOperationsInput = {
+  set?: Date | string | null
+}
+
+export type CustomerCreateNestedOneWithoutSubscriptionsInput = {
+  create?: Prisma.XOR<Prisma.CustomerCreateWithoutSubscriptionsInput, Prisma.CustomerUncheckedCreateWithoutSubscriptionsInput>
+  connectOrCreate?: Prisma.CustomerCreateOrConnectWithoutSubscriptionsInput
+  connect?: Prisma.CustomerWhereUniqueInput
+}
+
+export type CustomerUpdateOneRequiredWithoutSubscriptionsNestedInput = {
+  create?: Prisma.XOR<Prisma.CustomerCreateWithoutSubscriptionsInput, Prisma.CustomerUncheckedCreateWithoutSubscriptionsInput>
+  connectOrCreate?: Prisma.CustomerCreateOrConnectWithoutSubscriptionsInput
+  upsert?: Prisma.CustomerUpsertWithoutSubscriptionsInput
+  connect?: Prisma.CustomerWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.CustomerUpdateToOneWithWhereWithoutSubscriptionsInput, Prisma.CustomerUpdateWithoutSubscriptionsInput>, Prisma.CustomerUncheckedUpdateWithoutSubscriptionsInput>
+}
+
 export type CustomerCreateNestedOneWithoutAppointmentsInput = {
   create?: Prisma.XOR<Prisma.CustomerCreateWithoutAppointmentsInput, Prisma.CustomerUncheckedCreateWithoutAppointmentsInput>
   connectOrCreate?: Prisma.CustomerCreateOrConnectWithoutAppointmentsInput
@@ -456,10 +723,20 @@ export type CustomerCreateWithoutSubscriptionInput = {
   name: string
   phone: string
   email?: string | null
+  passwordHash?: string | null
+  passwordSalt?: string | null
   notes?: string
+  silentPreference?: boolean
+  favoriteBarberId?: string | null
+  theme?: string
+  fontScale?: number
+  seniorMode?: boolean
+  lgpdConsentAt?: Date | string | null
+  anonymousHash?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   appointments?: Prisma.AppointmentCreateNestedManyWithoutCustomerInput
+  subscriptions?: Prisma.CustomerSubscriptionCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateWithoutSubscriptionInput = {
@@ -467,10 +744,20 @@ export type CustomerUncheckedCreateWithoutSubscriptionInput = {
   name: string
   phone: string
   email?: string | null
+  passwordHash?: string | null
+  passwordSalt?: string | null
   notes?: string
+  silentPreference?: boolean
+  favoriteBarberId?: string | null
+  theme?: string
+  fontScale?: number
+  seniorMode?: boolean
+  lgpdConsentAt?: Date | string | null
+  anonymousHash?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   appointments?: Prisma.AppointmentUncheckedCreateNestedManyWithoutCustomerInput
+  subscriptions?: Prisma.CustomerSubscriptionUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerCreateOrConnectWithoutSubscriptionInput = {
@@ -507,10 +794,119 @@ export type CustomerScalarWhereInput = {
   name?: Prisma.StringFilter<"Customer"> | string
   phone?: Prisma.StringFilter<"Customer"> | string
   email?: Prisma.StringNullableFilter<"Customer"> | string | null
+  passwordHash?: Prisma.StringNullableFilter<"Customer"> | string | null
+  passwordSalt?: Prisma.StringNullableFilter<"Customer"> | string | null
   notes?: Prisma.StringFilter<"Customer"> | string
+  silentPreference?: Prisma.BoolFilter<"Customer"> | boolean
+  favoriteBarberId?: Prisma.StringNullableFilter<"Customer"> | string | null
+  theme?: Prisma.StringFilter<"Customer"> | string
+  fontScale?: Prisma.IntFilter<"Customer"> | number
+  seniorMode?: Prisma.BoolFilter<"Customer"> | boolean
+  lgpdConsentAt?: Prisma.DateTimeNullableFilter<"Customer"> | Date | string | null
+  anonymousHash?: Prisma.StringNullableFilter<"Customer"> | string | null
   subscriptionId?: Prisma.StringNullableFilter<"Customer"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Customer"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Customer"> | Date | string
+}
+
+export type CustomerCreateWithoutSubscriptionsInput = {
+  id?: string
+  name: string
+  phone: string
+  email?: string | null
+  passwordHash?: string | null
+  passwordSalt?: string | null
+  notes?: string
+  silentPreference?: boolean
+  favoriteBarberId?: string | null
+  theme?: string
+  fontScale?: number
+  seniorMode?: boolean
+  lgpdConsentAt?: Date | string | null
+  anonymousHash?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  subscription?: Prisma.SubscriptionPlanCreateNestedOneWithoutCustomersInput
+  appointments?: Prisma.AppointmentCreateNestedManyWithoutCustomerInput
+}
+
+export type CustomerUncheckedCreateWithoutSubscriptionsInput = {
+  id?: string
+  name: string
+  phone: string
+  email?: string | null
+  passwordHash?: string | null
+  passwordSalt?: string | null
+  notes?: string
+  silentPreference?: boolean
+  favoriteBarberId?: string | null
+  theme?: string
+  fontScale?: number
+  seniorMode?: boolean
+  lgpdConsentAt?: Date | string | null
+  anonymousHash?: string | null
+  subscriptionId?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  appointments?: Prisma.AppointmentUncheckedCreateNestedManyWithoutCustomerInput
+}
+
+export type CustomerCreateOrConnectWithoutSubscriptionsInput = {
+  where: Prisma.CustomerWhereUniqueInput
+  create: Prisma.XOR<Prisma.CustomerCreateWithoutSubscriptionsInput, Prisma.CustomerUncheckedCreateWithoutSubscriptionsInput>
+}
+
+export type CustomerUpsertWithoutSubscriptionsInput = {
+  update: Prisma.XOR<Prisma.CustomerUpdateWithoutSubscriptionsInput, Prisma.CustomerUncheckedUpdateWithoutSubscriptionsInput>
+  create: Prisma.XOR<Prisma.CustomerCreateWithoutSubscriptionsInput, Prisma.CustomerUncheckedCreateWithoutSubscriptionsInput>
+  where?: Prisma.CustomerWhereInput
+}
+
+export type CustomerUpdateToOneWithWhereWithoutSubscriptionsInput = {
+  where?: Prisma.CustomerWhereInput
+  data: Prisma.XOR<Prisma.CustomerUpdateWithoutSubscriptionsInput, Prisma.CustomerUncheckedUpdateWithoutSubscriptionsInput>
+}
+
+export type CustomerUpdateWithoutSubscriptionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordSalt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.StringFieldUpdateOperationsInput | string
+  silentPreference?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  favoriteBarberId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  theme?: Prisma.StringFieldUpdateOperationsInput | string
+  fontScale?: Prisma.IntFieldUpdateOperationsInput | number
+  seniorMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lgpdConsentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  anonymousHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  subscription?: Prisma.SubscriptionPlanUpdateOneWithoutCustomersNestedInput
+  appointments?: Prisma.AppointmentUpdateManyWithoutCustomerNestedInput
+}
+
+export type CustomerUncheckedUpdateWithoutSubscriptionsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  phone?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordSalt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  notes?: Prisma.StringFieldUpdateOperationsInput | string
+  silentPreference?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  favoriteBarberId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  theme?: Prisma.StringFieldUpdateOperationsInput | string
+  fontScale?: Prisma.IntFieldUpdateOperationsInput | number
+  seniorMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lgpdConsentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  anonymousHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  subscriptionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  appointments?: Prisma.AppointmentUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerCreateWithoutAppointmentsInput = {
@@ -518,10 +914,20 @@ export type CustomerCreateWithoutAppointmentsInput = {
   name: string
   phone: string
   email?: string | null
+  passwordHash?: string | null
+  passwordSalt?: string | null
   notes?: string
+  silentPreference?: boolean
+  favoriteBarberId?: string | null
+  theme?: string
+  fontScale?: number
+  seniorMode?: boolean
+  lgpdConsentAt?: Date | string | null
+  anonymousHash?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   subscription?: Prisma.SubscriptionPlanCreateNestedOneWithoutCustomersInput
+  subscriptions?: Prisma.CustomerSubscriptionCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerUncheckedCreateWithoutAppointmentsInput = {
@@ -529,10 +935,20 @@ export type CustomerUncheckedCreateWithoutAppointmentsInput = {
   name: string
   phone: string
   email?: string | null
+  passwordHash?: string | null
+  passwordSalt?: string | null
   notes?: string
+  silentPreference?: boolean
+  favoriteBarberId?: string | null
+  theme?: string
+  fontScale?: number
+  seniorMode?: boolean
+  lgpdConsentAt?: Date | string | null
+  anonymousHash?: string | null
   subscriptionId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
+  subscriptions?: Prisma.CustomerSubscriptionUncheckedCreateNestedManyWithoutCustomerInput
 }
 
 export type CustomerCreateOrConnectWithoutAppointmentsInput = {
@@ -556,10 +972,20 @@ export type CustomerUpdateWithoutAppointmentsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordSalt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notes?: Prisma.StringFieldUpdateOperationsInput | string
+  silentPreference?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  favoriteBarberId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  theme?: Prisma.StringFieldUpdateOperationsInput | string
+  fontScale?: Prisma.IntFieldUpdateOperationsInput | number
+  seniorMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lgpdConsentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  anonymousHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   subscription?: Prisma.SubscriptionPlanUpdateOneWithoutCustomersNestedInput
+  subscriptions?: Prisma.CustomerSubscriptionUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateWithoutAppointmentsInput = {
@@ -567,10 +993,20 @@ export type CustomerUncheckedUpdateWithoutAppointmentsInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordSalt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notes?: Prisma.StringFieldUpdateOperationsInput | string
+  silentPreference?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  favoriteBarberId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  theme?: Prisma.StringFieldUpdateOperationsInput | string
+  fontScale?: Prisma.IntFieldUpdateOperationsInput | number
+  seniorMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lgpdConsentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  anonymousHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   subscriptionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  subscriptions?: Prisma.CustomerSubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerCreateManySubscriptionInput = {
@@ -578,7 +1014,16 @@ export type CustomerCreateManySubscriptionInput = {
   name: string
   phone: string
   email?: string | null
+  passwordHash?: string | null
+  passwordSalt?: string | null
   notes?: string
+  silentPreference?: boolean
+  favoriteBarberId?: string | null
+  theme?: string
+  fontScale?: number
+  seniorMode?: boolean
+  lgpdConsentAt?: Date | string | null
+  anonymousHash?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -588,10 +1033,20 @@ export type CustomerUpdateWithoutSubscriptionInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordSalt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notes?: Prisma.StringFieldUpdateOperationsInput | string
+  silentPreference?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  favoriteBarberId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  theme?: Prisma.StringFieldUpdateOperationsInput | string
+  fontScale?: Prisma.IntFieldUpdateOperationsInput | number
+  seniorMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lgpdConsentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  anonymousHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   appointments?: Prisma.AppointmentUpdateManyWithoutCustomerNestedInput
+  subscriptions?: Prisma.CustomerSubscriptionUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateWithoutSubscriptionInput = {
@@ -599,10 +1054,20 @@ export type CustomerUncheckedUpdateWithoutSubscriptionInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordSalt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notes?: Prisma.StringFieldUpdateOperationsInput | string
+  silentPreference?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  favoriteBarberId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  theme?: Prisma.StringFieldUpdateOperationsInput | string
+  fontScale?: Prisma.IntFieldUpdateOperationsInput | number
+  seniorMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lgpdConsentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  anonymousHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   appointments?: Prisma.AppointmentUncheckedUpdateManyWithoutCustomerNestedInput
+  subscriptions?: Prisma.CustomerSubscriptionUncheckedUpdateManyWithoutCustomerNestedInput
 }
 
 export type CustomerUncheckedUpdateManyWithoutSubscriptionInput = {
@@ -610,7 +1075,16 @@ export type CustomerUncheckedUpdateManyWithoutSubscriptionInput = {
   name?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordSalt?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   notes?: Prisma.StringFieldUpdateOperationsInput | string
+  silentPreference?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  favoriteBarberId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  theme?: Prisma.StringFieldUpdateOperationsInput | string
+  fontScale?: Prisma.IntFieldUpdateOperationsInput | number
+  seniorMode?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lgpdConsentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  anonymousHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -622,10 +1096,12 @@ export type CustomerUncheckedUpdateManyWithoutSubscriptionInput = {
 
 export type CustomerCountOutputType = {
   appointments: number
+  subscriptions: number
 }
 
 export type CustomerCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   appointments?: boolean | CustomerCountOutputTypeCountAppointmentsArgs
+  subscriptions?: boolean | CustomerCountOutputTypeCountSubscriptionsArgs
 }
 
 /**
@@ -645,18 +1121,35 @@ export type CustomerCountOutputTypeCountAppointmentsArgs<ExtArgs extends runtime
   where?: Prisma.AppointmentWhereInput
 }
 
+/**
+ * CustomerCountOutputType without action
+ */
+export type CustomerCountOutputTypeCountSubscriptionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.CustomerSubscriptionWhereInput
+}
+
 
 export type CustomerSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
   phone?: boolean
   email?: boolean
+  passwordHash?: boolean
+  passwordSalt?: boolean
   notes?: boolean
+  silentPreference?: boolean
+  favoriteBarberId?: boolean
+  theme?: boolean
+  fontScale?: boolean
+  seniorMode?: boolean
+  lgpdConsentAt?: boolean
+  anonymousHash?: boolean
   subscriptionId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   subscription?: boolean | Prisma.Customer$subscriptionArgs<ExtArgs>
   appointments?: boolean | Prisma.Customer$appointmentsArgs<ExtArgs>
+  subscriptions?: boolean | Prisma.Customer$subscriptionsArgs<ExtArgs>
   _count?: boolean | Prisma.CustomerCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["customer"]>
 
@@ -665,7 +1158,16 @@ export type CustomerSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   name?: boolean
   phone?: boolean
   email?: boolean
+  passwordHash?: boolean
+  passwordSalt?: boolean
   notes?: boolean
+  silentPreference?: boolean
+  favoriteBarberId?: boolean
+  theme?: boolean
+  fontScale?: boolean
+  seniorMode?: boolean
+  lgpdConsentAt?: boolean
+  anonymousHash?: boolean
   subscriptionId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -677,7 +1179,16 @@ export type CustomerSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   name?: boolean
   phone?: boolean
   email?: boolean
+  passwordHash?: boolean
+  passwordSalt?: boolean
   notes?: boolean
+  silentPreference?: boolean
+  favoriteBarberId?: boolean
+  theme?: boolean
+  fontScale?: boolean
+  seniorMode?: boolean
+  lgpdConsentAt?: boolean
+  anonymousHash?: boolean
   subscriptionId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -689,16 +1200,26 @@ export type CustomerSelectScalar = {
   name?: boolean
   phone?: boolean
   email?: boolean
+  passwordHash?: boolean
+  passwordSalt?: boolean
   notes?: boolean
+  silentPreference?: boolean
+  favoriteBarberId?: boolean
+  theme?: boolean
+  fontScale?: boolean
+  seniorMode?: boolean
+  lgpdConsentAt?: boolean
+  anonymousHash?: boolean
   subscriptionId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type CustomerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "phone" | "email" | "notes" | "subscriptionId" | "createdAt" | "updatedAt", ExtArgs["result"]["customer"]>
+export type CustomerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "phone" | "email" | "passwordHash" | "passwordSalt" | "notes" | "silentPreference" | "favoriteBarberId" | "theme" | "fontScale" | "seniorMode" | "lgpdConsentAt" | "anonymousHash" | "subscriptionId" | "createdAt" | "updatedAt", ExtArgs["result"]["customer"]>
 export type CustomerInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   subscription?: boolean | Prisma.Customer$subscriptionArgs<ExtArgs>
   appointments?: boolean | Prisma.Customer$appointmentsArgs<ExtArgs>
+  subscriptions?: boolean | Prisma.Customer$subscriptionsArgs<ExtArgs>
   _count?: boolean | Prisma.CustomerCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type CustomerIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -713,13 +1234,23 @@ export type $CustomerPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
   objects: {
     subscription: Prisma.$SubscriptionPlanPayload<ExtArgs> | null
     appointments: Prisma.$AppointmentPayload<ExtArgs>[]
+    subscriptions: Prisma.$CustomerSubscriptionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     name: string
     phone: string
     email: string | null
+    passwordHash: string | null
+    passwordSalt: string | null
     notes: string
+    silentPreference: boolean
+    favoriteBarberId: string | null
+    theme: string
+    fontScale: number
+    seniorMode: boolean
+    lgpdConsentAt: Date | null
+    anonymousHash: string | null
     subscriptionId: string | null
     createdAt: Date
     updatedAt: Date
@@ -1119,6 +1650,7 @@ export interface Prisma__CustomerClient<T, Null = never, ExtArgs extends runtime
   readonly [Symbol.toStringTag]: "PrismaPromise"
   subscription<T extends Prisma.Customer$subscriptionArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Customer$subscriptionArgs<ExtArgs>>): Prisma.Prisma__SubscriptionPlanClient<runtime.Types.Result.GetResult<Prisma.$SubscriptionPlanPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   appointments<T extends Prisma.Customer$appointmentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Customer$appointmentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AppointmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  subscriptions<T extends Prisma.Customer$subscriptionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Customer$subscriptionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CustomerSubscriptionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1152,7 +1684,16 @@ export interface CustomerFieldRefs {
   readonly name: Prisma.FieldRef<"Customer", 'String'>
   readonly phone: Prisma.FieldRef<"Customer", 'String'>
   readonly email: Prisma.FieldRef<"Customer", 'String'>
+  readonly passwordHash: Prisma.FieldRef<"Customer", 'String'>
+  readonly passwordSalt: Prisma.FieldRef<"Customer", 'String'>
   readonly notes: Prisma.FieldRef<"Customer", 'String'>
+  readonly silentPreference: Prisma.FieldRef<"Customer", 'Boolean'>
+  readonly favoriteBarberId: Prisma.FieldRef<"Customer", 'String'>
+  readonly theme: Prisma.FieldRef<"Customer", 'String'>
+  readonly fontScale: Prisma.FieldRef<"Customer", 'Int'>
+  readonly seniorMode: Prisma.FieldRef<"Customer", 'Boolean'>
+  readonly lgpdConsentAt: Prisma.FieldRef<"Customer", 'DateTime'>
+  readonly anonymousHash: Prisma.FieldRef<"Customer", 'String'>
   readonly subscriptionId: Prisma.FieldRef<"Customer", 'String'>
   readonly createdAt: Prisma.FieldRef<"Customer", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Customer", 'DateTime'>
@@ -1597,6 +2138,30 @@ export type Customer$appointmentsArgs<ExtArgs extends runtime.Types.Extensions.I
   take?: number
   skip?: number
   distinct?: Prisma.AppointmentScalarFieldEnum | Prisma.AppointmentScalarFieldEnum[]
+}
+
+/**
+ * Customer.subscriptions
+ */
+export type Customer$subscriptionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the CustomerSubscription
+   */
+  select?: Prisma.CustomerSubscriptionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the CustomerSubscription
+   */
+  omit?: Prisma.CustomerSubscriptionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CustomerSubscriptionInclude<ExtArgs> | null
+  where?: Prisma.CustomerSubscriptionWhereInput
+  orderBy?: Prisma.CustomerSubscriptionOrderByWithRelationInput | Prisma.CustomerSubscriptionOrderByWithRelationInput[]
+  cursor?: Prisma.CustomerSubscriptionWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.CustomerSubscriptionScalarFieldEnum | Prisma.CustomerSubscriptionScalarFieldEnum[]
 }
 
 /**

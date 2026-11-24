@@ -21,8 +21,10 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      siteUrl: process.env.NUXT_PUBLIC_SITE_URL || "http://localhost:3000",
+      siteUrl: process.env.NUXT_PUBLIC_SITE_URL || "http://127.0.0.1:3000",
       barberShopName: "NAVALHA & CORTE",
+      googleClientId: process.env.GOOGLE_CLIENT_ID || "",
+      appleClientId: process.env.APPLE_CLIENT_ID || "",
     },
   },
 
@@ -52,7 +54,7 @@ export default defineNuxtConfig({
   },
 
   site: {
-    url: process.env.NUXT_PUBLIC_SITE_URL || "http://localhost:3000",
+    url: process.env.NUXT_PUBLIC_SITE_URL || "http://127.0.0.1:3000",
     name: "NAVALHA & CORTE",
   },
 

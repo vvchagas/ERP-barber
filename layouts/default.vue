@@ -1,8 +1,9 @@
 <template>
-  <div class="min-h-screen bg-white text-[#09090B]">
+  <div class="min-h-screen bg-(--page-bg) text-(--fg)">
     <AppHeader />
     <main>
       <slot />
     </main>
+    <AppFooter />
   </div>
 </template>

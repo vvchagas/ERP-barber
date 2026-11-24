@@ -1,9 +1,15 @@
 import { z } from "zod";
 import { prisma } from "../../utils/prisma";
-import { requireAdminSession } from "../../utils/adminSession";
+import {
+  getCustomerSessionPhone,
+  isAdminSessionValid,
+} from "../../utils/adminSession";
+import { writeAccessLog } from "../../utils/accessLog";
 
 const bodySchema = z.object({
   appointmentId: z.string().min(1).max(191).optional(),
+  serviceIds: z.array(z.string().min(1).max(191)).min(1).max(10).optional(),
+  planId: z.string().min(1).max(191).optional(),
   method: z.enum(["PIX", "CREDITO", "DEBITO", "DINHEIRO"]),
   timing: z.enum(["PRESENCIAL_BALCAO", "LIQUIDADO_AGORA"]),
   grossAmount: z.number().positive().max(100000).optional(),
@@ -11,56 +17,142 @@ const bodySchema = z.object({
   amountReceived: z.number().nonnegative().optional(),
   pixKey: z.string().optional(),
   cardAuthorization: z.string().optional(),
+  gatewayProvider: z.string().max(50).optional(),
+  gatewayTransactionId: z.string().max(191).optional(),
+}).refine((data) => data.appointmentId || data.serviceIds || data.planId, {
+  message: "Informe uma comanda, serviços ou plano",
 });
 
 export default defineEventHandler(async (event) => {
-  requireAdminSession(event);
+  const isAdmin = isAdminSessionValid(event);
+  const customerPhone = getCustomerSessionPhone(event);
+  if (!isAdmin && !customerPhone) {
+    throw createError({ statusCode: 404, statusMessage: "Página não encontrada" });
+  }
   const parsed = bodySchema.safeParse(await readBody(event));
   if (!parsed.success) {
     throw createError({ statusCode: 400, statusMessage: "Dados de pagamento inválidos" });
   }
-
   const data = parsed.data;
   const feeRate = data.method === "CREDITO"
     ? data.installments > 1 ? 0.0399 : 0.0299
     : data.method === "DEBITO" ? 0.0199 : 0;
 
-  return prisma.$transaction(async (tx) => {
+  const payment = await prisma.$transaction(async (tx) => {
     let gross: number;
     let barberId: string | null = null;
     if (data.appointmentId) {
       const appointment = await tx.appointment.findUnique({
         where: { id: data.appointmentId },
-        include: { barber: true, services: { include: { service: true } } },
+        include: { barber: true, customer: true, services: true },
       });
       if (!appointment) {
         throw createError({ statusCode: 404, statusMessage: "Agendamento não encontrado" });
       }
+      if (!isAdmin && customerPhone !== appointment.customer.phone) {
+        throw createError({ statusCode: 403, statusMessage: "Pagamento não autorizado" });
+      }
       if (appointment.status === "FALTOU" || appointment.status === "CANCELADO") {
         throw createError({ statusCode: 409, statusMessage: "Status não permite pagamento" });
       }
-      gross = Number(
-        appointment.services
-          .reduce((sum, item) => sum + Number(item.unitPrice) * item.quantity, 0)
-          .toFixed(2),
-      );
-      barberId = appointment.barberId;
-    } else {
-      if (!data.grossAmount) {
-        throw createError({ statusCode: 400, statusMessage: "Informe o valor da venda avulsa" });
+      const existingPayment = await tx.paymentTransaction.findFirst({
+        where: {
+          appointmentId: appointment.id,
+          status: { in: ["PENDENTE", "CONFIRMADO"] },
+        },
+        select: { id: true, status: true },
+      });
+      if (existingPayment) {
+        throw createError({ statusCode: 409, statusMessage: "Este agendamento já possui um pagamento em aberto ou confirmado" });
       }
-      gross = Number(data.grossAmount.toFixed(2));
+      const serviceIds = [...new Set(appointment.services.map((item) => item.serviceId))];
+      const services = await tx.service.findMany({
+        where: { id: { in: serviceIds }, active: true },
+        select: { id: true, price: true },
+      });
+      if (services.length !== serviceIds.length) {
+        throw createError({ statusCode: 409, statusMessage: "Um serviço desta comanda não está disponível" });
+      }
+      const grossCents = appointment.services.reduce((sum, item) => {
+        const service = services.find((candidate) => candidate.id === item.serviceId);
+        const priceCents = Math.round(Number(service?.price ?? 0) * 100);
+        return sum + priceCents * item.quantity;
+      }, 0);
+      gross = grossCents / 100;
+      barberId = appointment.barberId;
+    } else if (data.serviceIds) {
+      const services = await tx.service.findMany({
+        where: { id: { in: [...new Set(data.serviceIds)] }, active: true },
+        select: { id: true, price: true },
+      });
+      if (services.length !== new Set(data.serviceIds).size) {
+        throw createError({ statusCode: 400, statusMessage: "Um ou mais serviços não estão disponíveis" });
+      }
+      gross = services.reduce((sum, service) => sum + Number(service.price), 0);
+    } else if (data.planId) {
+      if (!customerPhone) {
+        throw createError({ statusCode: 403, statusMessage: "Plano requer uma sessão válida do cliente" });
+      }
+      const plan = await tx.subscriptionPlan.findFirst({
+        where: { id: data.planId, active: true },
+        select: { id: true, price: true, cutCredits: true, beardCredits: true },
+      });
+      if (!plan) {
+        throw createError({ statusCode: 404, statusMessage: "Plano não encontrado" });
+      }
+      gross = Number(plan.price);
+      const customer = await tx.customer.findUnique({ where: { phone: customerPhone } });
+      if (!customer) {
+        throw createError({ statusCode: 404, statusMessage: "Cliente não encontrado" });
+      }
+      const activeSubscription = await tx.customerSubscription.findFirst({
+        where: {
+          customerId: customer.id,
+          active: true,
+          expiresAt: { gt: new Date() },
+        },
+        select: { id: true },
+      });
+      if (activeSubscription) {
+        throw createError({ statusCode: 409, statusMessage: "Você já possui uma assinatura ativa" });
+      }
+      await tx.customerSubscription.updateMany({
+        where: { customerId: customer.id, active: true },
+        data: { active: false },
+      });
+      await tx.customerSubscription.create({
+        data: {
+          customerId: customer.id,
+          planId: plan.id,
+          remainingCredits: plan.cutCredits + plan.beardCredits,
+          startsAt: new Date(),
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          active: true,
+        },
+      });
+      await tx.customer.update({
+        where: { id: customer.id },
+        data: { subscriptionId: plan.id },
+      });
+    } else {
+      throw createError({ statusCode: 400, statusMessage: "Informe uma comanda, serviços ou plano" });
     }
 
-    if (data.method === "DINHEIRO" && (data.amountReceived ?? 0) < gross) {
+    const grossCents = Math.round(gross * 100);
+    if (data.method === "DINHEIRO" && Math.round((data.amountReceived ?? 0) * 100) < grossCents) {
       throw createError({ statusCode: 400, statusMessage: "Valor recebido insuficiente" });
     }
 
-    const feeAmount = Number((gross * feeRate).toFixed(2));
-    const netAmount = Number((gross - feeAmount).toFixed(2));
-    const amountReceived = data.method === "DINHEIRO" ? Number((data.amountReceived ?? 0).toFixed(2)) : 0;
+    const feeCents = Math.round(grossCents * feeRate);
+    const netCents = grossCents - feeCents;
+    const feeAmount = feeCents / 100;
+    const netAmount = netCents / 100;
+    const amountReceivedCents = data.method === "DINHEIRO"
+      ? Math.round((data.amountReceived ?? 0) * 100)
+      : 0;
+    const amountReceived = amountReceivedCents / 100;
     const changeGiven = data.method === "DINHEIRO"
-      ? Number((amountReceived - gross).toFixed(2))
+      ? (amountReceivedCents - grossCents) / 100
       : 0;
 
     const payment = await tx.paymentTransaction.create({
@@ -77,6 +169,8 @@ export default defineEventHandler(async (event) => {
         changeGiven,
         pixKey: data.pixKey,
         cardAuthorization: data.cardAuthorization,
+        gatewayProvider: data.gatewayProvider,
+        gatewayTransactionId: data.gatewayTransactionId,
         paidAt: data.method === "PIX" && data.timing === "PRESENCIAL_BALCAO" ? null : new Date(),
       },
     });
@@ -108,7 +202,7 @@ export default defineEventHandler(async (event) => {
               barberId: appointment.barberId,
               grossAmount: gross,
               commissionRate: rate,
-              commissionAmount: Number((gross * rate).toFixed(2)),
+              commissionAmount: Math.round(grossCents * rate) / 100,
             },
           });
         }
@@ -124,4 +218,6 @@ export default defineEventHandler(async (event) => {
       changeGiven,
     };
   });
+  await writeAccessLog(event, true, "payment_checkout", undefined);
+  return payment;
 });

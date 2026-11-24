@@ -1,69 +1,74 @@
 <script setup lang="ts">
-const dark = ref(false);
+type Theme = "light" | "dark" | "high-contrast";
+const route = useRoute();
+const menuOpen = ref(false);
+const theme = ref<Theme>("light");
 
-onMounted(() => {
-  dark.value = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  document.documentElement.dataset.theme = dark.value ? "dark" : "light";
-});
+const links = [
+  { label: "Início", to: "/" },
+  { label: "Agendar", to: "/agendamento" },
+  { label: "Planos VIP", to: "/planos" },
+  { label: "Caixa", to: "/caixa" },
+  { label: "Configurações", to: "/configuracoes" },
+];
+
+function applyTheme(value: Theme): void {
+  theme.value = value;
+  const root = document.documentElement;
+  root.classList.remove("light", "dark", "high-contrast");
+  root.classList.add(value);
+  root.dataset.theme = value;
+  localStorage.setItem("navalha-theme", value);
+}
 
 function toggleTheme(): void {
-  dark.value = !dark.value;
-  document.documentElement.dataset.theme = dark.value ? "dark" : "light";
-  document.documentElement.style.background = dark.value ? "#09090B" : "#FFFFFF";
-  document.body.style.background = dark.value ? "#09090B" : "#FFFFFF";
+  applyTheme(theme.value === "light" ? "dark" : theme.value === "dark" ? "high-contrast" : "light");
 }
+
+watch(menuOpen, (open) => {
+  document.body.style.overflow = open ? "hidden" : "";
+});
+
+onMounted(() => {
+  const saved = localStorage.getItem("navalha-theme");
+  applyTheme(saved === "dark" || saved === "high-contrast" ? saved : "light");
+  const senior = localStorage.getItem("navalha-senior") === "true";
+  document.documentElement.classList.toggle("senior-mode", senior);
+});
+
+onBeforeUnmount(() => { document.body.style.overflow = ""; });
 </script>
 
 <template>
-  <header
-    class="fixed inset-x-0 top-0 z-40 flex items-center justify-between gap-4 border-b-2 border-[#09090B] px-4 py-3 sm:px-6"
-    :class="dark ? 'bg-[#09090B] text-white' : 'bg-white text-[#09090B]'"
-  >
-    <nav class="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4" aria-label="Navegação principal">
-      <NuxtLink
-        to="/"
-        class="mr-auto flex min-h-12 items-center"
-        aria-label="NAVALHA & CORTE - Início"
-      >
-        <img
-          src="/favicon.ico"
-          alt=""
-          width="640"
-          height="180"
-          class="h-12 w-auto max-w-[180px]"
-        >
+  <header class="fixed inset-x-0 top-0 z-50 border-b-2 border-[#09090B] bg-(--surface-bg) text-(--fg)">
+    <nav class="mx-auto flex h-18 w-full max-w-7xl items-center justify-between px-4 sm:px-6" aria-label="Navegação principal">
+      <NuxtLink to="/" class="flex h-11 items-center" aria-label="NAVALHA & CORTE - Início">
+        <img src="/favicon.ico" alt="NAVALHA & CORTE" class="h-11 w-auto">
       </NuxtLink>
-      <div class="hidden items-center gap-4 lg:flex">
-        <NuxtLink class="flex min-h-12 items-center border-2 border-[#09090B] bg-white px-4 font-black text-[#09090B]" to="/">INÍCIO</NuxtLink>
-        <NuxtLink class="flex min-h-12 items-center border-2 border-[#09090B] bg-[#F59E0B] px-4 font-black text-[#09090B] shadow-[4px_4px_0px_#09090B] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none" to="/agendamento">AGENDAR</NuxtLink>
-        <NuxtLink class="flex min-h-12 items-center border-2 border-[#09090B] bg-white px-4 font-black text-[#09090B]" to="/caixa">CAIXA</NuxtLink>
-        <NuxtLink class="flex min-h-12 items-center border-2 border-[#09090B] bg-white px-4 font-black text-[#09090B]" to="/admin">ADMIN</NuxtLink>
-        <button
-          type="button"
-          class="min-h-12 min-w-12 border-2 border-[#09090B] bg-[#F4F4F5] px-3 font-black text-[#09090B] shadow-[4px_4px_0px_#09090B]"
-          :aria-label="dark ? 'Ativar tema claro' : 'Ativar tema escuro'"
-          @click="toggleTheme"
-        >
-          {{ dark ? "CLARO" : "ESCURO" }}
-        </button>
+      <div class="hidden items-center gap-2 lg:flex">
+        <NuxtLink v-for="link in links" :key="link.to" :to="link.to"
+          class="flex min-h-12 items-center border-2 px-3 font-black"
+          :class="route.path === link.to ? 'border-[#09090B] bg-[#F59E0B] text-[#09090B] shadow-[4px_4px_0px_#09090B]' : 'border-(--border) bg-(--surface-bg) text-(--fg)'">
+          {{ link.label }}
+        </NuxtLink>
       </div>
-      <div class="flex items-center gap-2 lg:hidden">
-        <NuxtLink class="flex min-h-12 items-center border-2 border-[#09090B] bg-[#F59E0B] px-3 font-black text-[#09090B]" to="/agendamento">AGENDAR</NuxtLink>
-        <button
-          type="button"
-          class="min-h-12 min-w-12 border-2 border-[#09090B] bg-[#F4F4F5] px-2 font-black text-[#09090B]"
-          :aria-label="dark ? 'Ativar tema claro' : 'Ativar tema escuro'"
-          @click="toggleTheme"
-        >
-          {{ dark ? "CLARO" : "ESC" }}
+      <div class="flex items-center gap-2">
+        <NuxtLink to="/login" class="hidden min-h-12 items-center border-2 border-(--border) bg-(--surface-bg) px-4 font-black sm:flex">Entrar / Conta</NuxtLink>
+        <button type="button" class="min-h-12 min-w-12 border-2 border-(--border) bg-[#F59E0B] px-3 font-black text-[#09090B]" :aria-label="`Tema atual: ${theme}`" @click="toggleTheme">
+          {{ theme === "light" ? "CL" : theme === "dark" ? "EC" : "AA" }}
         </button>
-      </div>
-      <div class="grid w-full grid-cols-4 gap-2 lg:hidden">
-        <NuxtLink class="flex min-h-12 items-center justify-center border-2 border-[#09090B] bg-white px-1 text-sm font-black text-[#09090B]" to="/">INÍCIO</NuxtLink>
-        <NuxtLink class="flex min-h-12 items-center justify-center border-2 border-[#09090B] bg-[#F59E0B] px-1 text-sm font-black text-[#09090B]" to="/agendamento">AGENDAR</NuxtLink>
-        <NuxtLink class="flex min-h-12 items-center justify-center border-2 border-[#09090B] bg-white px-1 text-sm font-black text-[#09090B]" to="/caixa">CAIXA</NuxtLink>
-        <NuxtLink class="flex min-h-12 items-center justify-center border-2 border-[#09090B] bg-white px-1 text-sm font-black text-[#09090B]" to="/admin">ADMIN</NuxtLink>
+        <button type="button" class="min-h-12 min-w-12 border-2 border-(--border) bg-(--surface-bg) px-3 text-xl font-black lg:hidden" :aria-expanded="menuOpen" aria-controls="mobile-menu" @click="menuOpen = !menuOpen">
+          {{ menuOpen ? "X" : "☰" }}
+        </button>
       </div>
     </nav>
+    <div v-if="menuOpen" id="mobile-menu" class="fixed inset-x-0 top-18 bottom-0 overflow-y-auto border-t-2 border-(--border) bg-(--page-bg) p-4 lg:hidden">
+      <div class="grid gap-3">
+        <NuxtLink v-for="link in links" :key="link.to" :to="link.to" class="flex min-h-14 items-center border-2 border-(--border) px-4 font-black" :class="route.path === link.to ? 'bg-[#F59E0B] text-[#09090B]' : 'bg-(--surface-bg) text-(--fg)'" @click="menuOpen = false">
+          {{ link.label }}
+        </NuxtLink>
+        <NuxtLink to="/login" class="flex min-h-14 items-center border-2 border-(--border) bg-(--surface-bg) px-4 font-black" @click="menuOpen = false">Entrar / Conta</NuxtLink>
+      </div>
+    </div>
   </header>
 </template>

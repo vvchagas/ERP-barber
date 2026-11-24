@@ -59,6 +59,8 @@ export type PaymentTransactionMinAggregateOutputType = {
   pixKey: string | null
   pixTxId: string | null
   cardAuthorization: string | null
+  gatewayProvider: string | null
+  gatewayTransactionId: string | null
   paidAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -79,6 +81,8 @@ export type PaymentTransactionMaxAggregateOutputType = {
   pixKey: string | null
   pixTxId: string | null
   cardAuthorization: string | null
+  gatewayProvider: string | null
+  gatewayTransactionId: string | null
   paidAt: Date | null
   createdAt: Date | null
   updatedAt: Date | null
@@ -99,6 +103,8 @@ export type PaymentTransactionCountAggregateOutputType = {
   pixKey: number
   pixTxId: number
   cardAuthorization: number
+  gatewayProvider: number
+  gatewayTransactionId: number
   paidAt: number
   createdAt: number
   updatedAt: number
@@ -139,6 +145,8 @@ export type PaymentTransactionMinAggregateInputType = {
   pixKey?: true
   pixTxId?: true
   cardAuthorization?: true
+  gatewayProvider?: true
+  gatewayTransactionId?: true
   paidAt?: true
   createdAt?: true
   updatedAt?: true
@@ -159,6 +167,8 @@ export type PaymentTransactionMaxAggregateInputType = {
   pixKey?: true
   pixTxId?: true
   cardAuthorization?: true
+  gatewayProvider?: true
+  gatewayTransactionId?: true
   paidAt?: true
   createdAt?: true
   updatedAt?: true
@@ -179,6 +189,8 @@ export type PaymentTransactionCountAggregateInputType = {
   pixKey?: true
   pixTxId?: true
   cardAuthorization?: true
+  gatewayProvider?: true
+  gatewayTransactionId?: true
   paidAt?: true
   createdAt?: true
   updatedAt?: true
@@ -286,6 +298,8 @@ export type PaymentTransactionGroupByOutputType = {
   pixKey: string | null
   pixTxId: string | null
   cardAuthorization: string | null
+  gatewayProvider: string | null
+  gatewayTransactionId: string | null
   paidAt: Date | null
   createdAt: Date
   updatedAt: Date
@@ -329,6 +343,8 @@ export type PaymentTransactionWhereInput = {
   pixKey?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
   pixTxId?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
   cardAuthorization?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
+  gatewayProvider?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
+  gatewayTransactionId?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
   paidAt?: Prisma.DateTimeNullableFilter<"PaymentTransaction"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"PaymentTransaction"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"PaymentTransaction"> | Date | string
@@ -350,6 +366,8 @@ export type PaymentTransactionOrderByWithRelationInput = {
   pixKey?: Prisma.SortOrderInput | Prisma.SortOrder
   pixTxId?: Prisma.SortOrderInput | Prisma.SortOrder
   cardAuthorization?: Prisma.SortOrderInput | Prisma.SortOrder
+  gatewayProvider?: Prisma.SortOrderInput | Prisma.SortOrder
+  gatewayTransactionId?: Prisma.SortOrderInput | Prisma.SortOrder
   paidAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -374,6 +392,8 @@ export type PaymentTransactionWhereUniqueInput = Prisma.AtLeast<{
   pixKey?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
   pixTxId?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
   cardAuthorization?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
+  gatewayProvider?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
+  gatewayTransactionId?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
   paidAt?: Prisma.DateTimeNullableFilter<"PaymentTransaction"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"PaymentTransaction"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"PaymentTransaction"> | Date | string
@@ -395,6 +415,8 @@ export type PaymentTransactionOrderByWithAggregationInput = {
   pixKey?: Prisma.SortOrderInput | Prisma.SortOrder
   pixTxId?: Prisma.SortOrderInput | Prisma.SortOrder
   cardAuthorization?: Prisma.SortOrderInput | Prisma.SortOrder
+  gatewayProvider?: Prisma.SortOrderInput | Prisma.SortOrder
+  gatewayTransactionId?: Prisma.SortOrderInput | Prisma.SortOrder
   paidAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -423,6 +445,8 @@ export type PaymentTransactionScalarWhereWithAggregatesInput = {
   pixKey?: Prisma.StringNullableWithAggregatesFilter<"PaymentTransaction"> | string | null
   pixTxId?: Prisma.StringNullableWithAggregatesFilter<"PaymentTransaction"> | string | null
   cardAuthorization?: Prisma.StringNullableWithAggregatesFilter<"PaymentTransaction"> | string | null
+  gatewayProvider?: Prisma.StringNullableWithAggregatesFilter<"PaymentTransaction"> | string | null
+  gatewayTransactionId?: Prisma.StringNullableWithAggregatesFilter<"PaymentTransaction"> | string | null
   paidAt?: Prisma.DateTimeNullableWithAggregatesFilter<"PaymentTransaction"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"PaymentTransaction"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"PaymentTransaction"> | Date | string
@@ -442,6 +466,8 @@ export type PaymentTransactionCreateInput = {
   pixKey?: string | null
   pixTxId?: string | null
   cardAuthorization?: string | null
+  gatewayProvider?: string | null
+  gatewayTransactionId?: string | null
   paidAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -463,6 +489,8 @@ export type PaymentTransactionUncheckedCreateInput = {
   pixKey?: string | null
   pixTxId?: string | null
   cardAuthorization?: string | null
+  gatewayProvider?: string | null
+  gatewayTransactionId?: string | null
   paidAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -482,6 +510,8 @@ export type PaymentTransactionUpdateInput = {
   pixKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pixTxId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardAuthorization?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayProvider?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayTransactionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -503,6 +533,8 @@ export type PaymentTransactionUncheckedUpdateInput = {
   pixKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pixTxId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardAuthorization?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayProvider?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayTransactionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -523,6 +555,8 @@ export type PaymentTransactionCreateManyInput = {
   pixKey?: string | null
   pixTxId?: string | null
   cardAuthorization?: string | null
+  gatewayProvider?: string | null
+  gatewayTransactionId?: string | null
   paidAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -542,6 +576,8 @@ export type PaymentTransactionUpdateManyMutationInput = {
   pixKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pixTxId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardAuthorization?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayProvider?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayTransactionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -562,6 +598,8 @@ export type PaymentTransactionUncheckedUpdateManyInput = {
   pixKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pixTxId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardAuthorization?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayProvider?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayTransactionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -592,6 +630,8 @@ export type PaymentTransactionCountOrderByAggregateInput = {
   pixKey?: Prisma.SortOrder
   pixTxId?: Prisma.SortOrder
   cardAuthorization?: Prisma.SortOrder
+  gatewayProvider?: Prisma.SortOrder
+  gatewayTransactionId?: Prisma.SortOrder
   paidAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -621,6 +661,8 @@ export type PaymentTransactionMaxOrderByAggregateInput = {
   pixKey?: Prisma.SortOrder
   pixTxId?: Prisma.SortOrder
   cardAuthorization?: Prisma.SortOrder
+  gatewayProvider?: Prisma.SortOrder
+  gatewayTransactionId?: Prisma.SortOrder
   paidAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -641,6 +683,8 @@ export type PaymentTransactionMinOrderByAggregateInput = {
   pixKey?: Prisma.SortOrder
   pixTxId?: Prisma.SortOrder
   cardAuthorization?: Prisma.SortOrder
+  gatewayProvider?: Prisma.SortOrder
+  gatewayTransactionId?: Prisma.SortOrder
   paidAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -719,6 +763,8 @@ export type PaymentTransactionCreateWithoutAppointmentInput = {
   pixKey?: string | null
   pixTxId?: string | null
   cardAuthorization?: string | null
+  gatewayProvider?: string | null
+  gatewayTransactionId?: string | null
   paidAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -738,6 +784,8 @@ export type PaymentTransactionUncheckedCreateWithoutAppointmentInput = {
   pixKey?: string | null
   pixTxId?: string | null
   cardAuthorization?: string | null
+  gatewayProvider?: string | null
+  gatewayTransactionId?: string | null
   paidAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -787,6 +835,8 @@ export type PaymentTransactionScalarWhereInput = {
   pixKey?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
   pixTxId?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
   cardAuthorization?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
+  gatewayProvider?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
+  gatewayTransactionId?: Prisma.StringNullableFilter<"PaymentTransaction"> | string | null
   paidAt?: Prisma.DateTimeNullableFilter<"PaymentTransaction"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"PaymentTransaction"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"PaymentTransaction"> | Date | string
@@ -806,6 +856,8 @@ export type PaymentTransactionCreateManyAppointmentInput = {
   pixKey?: string | null
   pixTxId?: string | null
   cardAuthorization?: string | null
+  gatewayProvider?: string | null
+  gatewayTransactionId?: string | null
   paidAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -825,6 +877,8 @@ export type PaymentTransactionUpdateWithoutAppointmentInput = {
   pixKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pixTxId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardAuthorization?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayProvider?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayTransactionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -844,6 +898,8 @@ export type PaymentTransactionUncheckedUpdateWithoutAppointmentInput = {
   pixKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pixTxId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardAuthorization?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayProvider?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayTransactionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -863,6 +919,8 @@ export type PaymentTransactionUncheckedUpdateManyWithoutAppointmentInput = {
   pixKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   pixTxId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cardAuthorization?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayProvider?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  gatewayTransactionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   paidAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -885,6 +943,8 @@ export type PaymentTransactionSelect<ExtArgs extends runtime.Types.Extensions.In
   pixKey?: boolean
   pixTxId?: boolean
   cardAuthorization?: boolean
+  gatewayProvider?: boolean
+  gatewayTransactionId?: boolean
   paidAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -906,6 +966,8 @@ export type PaymentTransactionSelectCreateManyAndReturn<ExtArgs extends runtime.
   pixKey?: boolean
   pixTxId?: boolean
   cardAuthorization?: boolean
+  gatewayProvider?: boolean
+  gatewayTransactionId?: boolean
   paidAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -927,6 +989,8 @@ export type PaymentTransactionSelectUpdateManyAndReturn<ExtArgs extends runtime.
   pixKey?: boolean
   pixTxId?: boolean
   cardAuthorization?: boolean
+  gatewayProvider?: boolean
+  gatewayTransactionId?: boolean
   paidAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
@@ -948,12 +1012,14 @@ export type PaymentTransactionSelectScalar = {
   pixKey?: boolean
   pixTxId?: boolean
   cardAuthorization?: boolean
+  gatewayProvider?: boolean
+  gatewayTransactionId?: boolean
   paidAt?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type PaymentTransactionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "appointmentId" | "method" | "status" | "timing" | "grossAmount" | "feeAmount" | "netAmount" | "installments" | "amountReceived" | "changeGiven" | "pixKey" | "pixTxId" | "cardAuthorization" | "paidAt" | "createdAt" | "updatedAt", ExtArgs["result"]["paymentTransaction"]>
+export type PaymentTransactionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "appointmentId" | "method" | "status" | "timing" | "grossAmount" | "feeAmount" | "netAmount" | "installments" | "amountReceived" | "changeGiven" | "pixKey" | "pixTxId" | "cardAuthorization" | "gatewayProvider" | "gatewayTransactionId" | "paidAt" | "createdAt" | "updatedAt", ExtArgs["result"]["paymentTransaction"]>
 export type PaymentTransactionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   appointment?: boolean | Prisma.PaymentTransaction$appointmentArgs<ExtArgs>
 }
@@ -984,6 +1050,8 @@ export type $PaymentTransactionPayload<ExtArgs extends runtime.Types.Extensions.
     pixKey: string | null
     pixTxId: string | null
     cardAuthorization: string | null
+    gatewayProvider: string | null
+    gatewayTransactionId: string | null
     paidAt: Date | null
     createdAt: Date
     updatedAt: Date
@@ -1425,6 +1493,8 @@ export interface PaymentTransactionFieldRefs {
   readonly pixKey: Prisma.FieldRef<"PaymentTransaction", 'String'>
   readonly pixTxId: Prisma.FieldRef<"PaymentTransaction", 'String'>
   readonly cardAuthorization: Prisma.FieldRef<"PaymentTransaction", 'String'>
+  readonly gatewayProvider: Prisma.FieldRef<"PaymentTransaction", 'String'>
+  readonly gatewayTransactionId: Prisma.FieldRef<"PaymentTransaction", 'String'>
   readonly paidAt: Prisma.FieldRef<"PaymentTransaction", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"PaymentTransaction", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"PaymentTransaction", 'DateTime'>

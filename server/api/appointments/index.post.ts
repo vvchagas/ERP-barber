@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { prisma } from "../../utils/prisma";
+import { createCustomerSession } from "../../utils/adminSession";
 
 const bodySchema = z.object({
   customerName: z.string().trim().min(2).max(100),
@@ -11,6 +12,8 @@ const bodySchema = z.object({
   noConversation: z.boolean().default(false),
   notes: z.string().trim().max(1000).default(""),
   paymentTiming: z.enum(["PRESENCIAL_BALCAO", "LIQUIDADO_AGORA"]).default("PRESENCIAL_BALCAO"),
+  lgpdConsent: z.literal(true),
+  usePlanCredit: z.boolean().default(false),
 });
 
 export default defineEventHandler(async (event) => {
@@ -38,7 +41,34 @@ export default defineEventHandler(async (event) => {
 
     const duration = services.reduce((total, service) => total + service.durationMin, 0);
     const start = new Date(data.scheduledAt);
+    if (Number.isNaN(start.getTime()) || start.getTime() <= Date.now()) {
+      throw createError({ statusCode: 400, statusMessage: "Não é possível agendar em um horário passado" });
+    }
+    const saoPauloParts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Sao_Paulo",
+      weekday: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).formatToParts(start);
+    const weekday = saoPauloParts.find((part) => part.type === "weekday")?.value;
+    const hour = Number(saoPauloParts.find((part) => part.type === "hour")?.value ?? "0");
+    const minute = Number(saoPauloParts.find((part) => part.type === "minute")?.value ?? "0");
+    if (weekday === "Sun" || hour < 8 || hour >= 19 || (hour === 18 && minute > 30)) {
+      throw createError({ statusCode: 400, statusMessage: "Horário fora do funcionamento" });
+    }
     const end = new Date(start.getTime() + duration * 60_000);
+    const endParts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Sao_Paulo",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).formatToParts(end);
+    const endHour = Number(endParts.find((part) => part.type === "hour")?.value ?? "24");
+    const endMinute = Number(endParts.find((part) => part.type === "minute")?.value ?? "0");
+    if (endHour > 19 || (endHour === 19 && endMinute > 0)) {
+      throw createError({ statusCode: 400, statusMessage: "O serviço ultrapassa o horário de funcionamento" });
+    }
     await tx.$executeRawUnsafe(
       "SELECT pg_advisory_xact_lock(hashtext($1))",
       `appointment:${data.barberId}:${start.toISOString().slice(0, 10)}`,
@@ -59,13 +89,34 @@ export default defineEventHandler(async (event) => {
 
     const customer = await tx.customer.upsert({
       where: { phone: data.customerPhone },
-      update: { name: data.customerName, email: data.customerEmail },
+      update: { name: data.customerName, email: data.customerEmail, lgpdConsentAt: new Date(), notes: data.notes },
       create: {
         name: data.customerName,
         phone: data.customerPhone,
         email: data.customerEmail,
+        lgpdConsentAt: new Date(),
+        notes: data.notes,
       },
     });
+
+    if (data.usePlanCredit) {
+      const subscription = await tx.customerSubscription.findFirst({
+        where: {
+          customerId: customer.id,
+          active: true,
+          expiresAt: { gt: new Date() },
+          remainingCredits: { gt: 0 },
+        },
+        orderBy: { expiresAt: "asc" },
+      });
+      if (!subscription) {
+        throw createError({ statusCode: 409, statusMessage: "Você não possui créditos ativos para este agendamento" });
+      }
+      await tx.customerSubscription.update({
+        where: { id: subscription.id },
+        data: { remainingCredits: { decrement: 1 } },
+      });
+    }
 
     const appointment = await tx.appointment.create({
       data: {
@@ -86,7 +137,14 @@ export default defineEventHandler(async (event) => {
       },
       include: { customer: true, barber: true, services: { include: { service: true } } },
     });
+    createCustomerSession(event, customer.phone);
 
-    return appointment;
+    return {
+      ...appointment,
+      services: appointment.services.map((item) => ({
+        ...item,
+        unitPrice: Number(item.unitPrice),
+      })),
+    };
   });
 });

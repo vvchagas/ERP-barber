@@ -26,6 +26,105 @@ body {
   background: var(--brand-white);
 }
 
+html.light {
+  --page-bg: #FFFFFF;
+  --surface-bg: #FFFFFF;
+  --muted-bg: #F4F4F5;
+  --fg: #09090B;
+  --border: #09090B;
+}
+
+html.dark {
+  --page-bg: #09090B;
+  --surface-bg: #18181B;
+  --muted-bg: #27272A;
+  --fg: #FFFFFF;
+  --border: #F59E0B;
+  background: var(--page-bg);
+  color: var(--fg);
+}
+
+html.high-contrast {
+  --page-bg: #000000;
+  --surface-bg: #000000;
+  --muted-bg: #09090B;
+  --fg: #FFFFFF;
+  --border: #FACC15;
+  background: var(--page-bg);
+  color: var(--fg);
+}
+
+html.dark body,
+html.high-contrast body {
+  background: var(--page-bg);
+  color: var(--fg);
+}
+
+html.senior-mode {
+  font-size: 20px;
+}
+
+html.senior-mode button,
+html.senior-mode a,
+html.senior-mode input,
+html.senior-mode select,
+html.senior-mode textarea {
+  min-height: 60px;
+}
+
+html.senior-mode label {
+  line-height: 1.8;
+}
+
+html.senior-mode *,
+html.senior-mode *::before,
+html.senior-mode *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+html.dark [class*="bg-[#F4F4F5]"],
+html.high-contrast [class*="bg-[#F4F4F5]"] {
+  background-color: var(--muted-bg);
+  color: var(--fg);
+}
+
+html.dark [class*="bg-[#18181B]"],
+html.high-contrast [class*="bg-[#18181B]"] {
+  background-color: var(--surface-bg);
+  color: var(--fg);
+}
+
+html.dark [class*="bg-[#09090B]"],
+html.high-contrast [class*="bg-[#09090B]"] {
+  background-color: #09090B;
+  color: #FFFFFF;
+}
+
+html.dark [class~="bg-white"],
+html.high-contrast [class~="bg-white"] {
+  background-color: var(--surface-bg);
+  color: var(--fg);
+}
+
+html.dark [class~="bg-[#F4F4F5]"],
+html.high-contrast [class~="bg-[#F4F4F5]"] {
+  background-color: var(--muted-bg);
+  color: var(--fg);
+}
+
+html.dark [class~="text-[#09090B]"],
+html.high-contrast [class~="text-[#09090B]"] {
+  color: var(--fg);
+}
+
+html.dark [class~="border-[#09090B]"],
+html.high-contrast [class~="border-[#09090B]"] {
+  border-color: var(--border);
+}
+
 *,
 *::before,
 *::after {
@@ -58,17 +157,3 @@ a {
   outline-offset: 3px;
 }
 
-[data-theme="dark"] body,
-[data-theme="dark"] {
-  background: #09090B;
-  color: #FFFFFF;
-}
-
-[data-theme="dark"] .bg-white {
-  background-color: #18181B;
-  color: #FFFFFF;
-}
-
-[data-theme="dark"] .text-\[\#09090B\] {
-  color: #FFFFFF;
-}

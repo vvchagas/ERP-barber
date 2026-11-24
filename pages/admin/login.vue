@@ -23,7 +23,7 @@ async function login(): Promise<void> {
 </script>
 
 <template>
-  <main class="grid min-h-screen place-items-center bg-[#18181B] px-4 pt-32 sm:pt-[72px]">
+  <main class="grid min-h-screen place-items-center bg-[#18181B] px-4 pt-32 sm:pt-18">
     <form class="w-full max-w-md border-2 border-[#09090B] bg-white p-6 shadow-[8px_8px_0px_#F59E0B]" @submit.prevent="login">
       <h1 class="text-3xl font-black">ACESSO ADMINISTRATIVO</h1>
       <label class="mt-6 block font-black">USUÁRIO

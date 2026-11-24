@@ -1,6 +1,9 @@
-import { clearAdminSession } from "../../utils/adminSession";
+import { clearAdminSession, requireAdminSession } from "../../utils/adminSession";
+import { writeAccessLog } from "../../utils/accessLog";
 
-export default defineEventHandler((event) => {
+export default defineEventHandler(async (event) => {
+  requireAdminSession(event);
+  await writeAccessLog(event, true, "logout", undefined);
   clearAdminSession(event);
   return { unlocked: false };
 });

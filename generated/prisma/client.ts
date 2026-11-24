@@ -72,6 +72,11 @@ export type SubscriptionPlan = Prisma.SubscriptionPlanModel
  */
 export type Customer = Prisma.CustomerModel
 /**
+ * Model CustomerSubscription
+ * 
+ */
+export type CustomerSubscription = Prisma.CustomerSubscriptionModel
+/**
  * Model Appointment
  * 
  */
