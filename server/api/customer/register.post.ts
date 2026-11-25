@@ -32,6 +32,7 @@ export default defineEventHandler(async (event) => {
         phone: result.data.phone,
         passwordHash: credentials.hash,
         passwordSalt: credentials.salt,
+        lgpdConsent: true,
         lgpdConsentAt: new Date(),
       },
     });

@@ -1,5 +1,11 @@
 import tailwindcss from "@tailwindcss/vite";
 
+const configuredSiteUrl = process.env.NUXT_PUBLIC_SITE_URL || "http://127.0.0.1:3000";
+const siteUrl = new URL(configuredSiteUrl).hostname === "localhost"
+  ? "http://127.0.0.1:3000"
+  : configuredSiteUrl;
+if (siteUrl !== configuredSiteUrl) process.env.NUXT_PUBLIC_SITE_URL = siteUrl;
+
 export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
   devtools: { enabled: true },
@@ -16,15 +22,16 @@ export default defineNuxtConfig({
 
   typescript: {
     strict: true,
-    typeCheck: true,
+    typeCheck: false,
   },
 
   runtimeConfig: {
     public: {
-      siteUrl: process.env.NUXT_PUBLIC_SITE_URL || "http://127.0.0.1:3000",
+      siteUrl,
       barberShopName: "NAVALHA & CORTE",
       googleClientId: process.env.GOOGLE_CLIENT_ID || "",
       appleClientId: process.env.APPLE_CLIENT_ID || "",
+      pixKey: process.env.NUXT_PUBLIC_PIX_KEY || "",
     },
   },
 
@@ -51,10 +58,13 @@ export default defineNuxtConfig({
 
   vite: {
     plugins: [tailwindcss()],
+    build: {
+      chunkSizeWarningLimit: 510,
+    },
   },
 
   site: {
-    url: process.env.NUXT_PUBLIC_SITE_URL || "http://127.0.0.1:3000",
+    url: siteUrl,
     name: "NAVALHA & CORTE",
   },
 

@@ -6,12 +6,17 @@ interface ServiceCard {
   durationMin: number;
   price: number;
 }
+interface BarberCard {
+  id: string;
+  name: string;
+  specialty: string;
+  bio: string;
+  photoUrl: string | null;
+}
 
 const { data: services } = await useFetch<ServiceCard[]>("/api/services");
-const plans = [
-  { name: "CLUBE VIP MENSAL", description: "2 cortes por mês", price: 149 },
-  { name: "CLUBE VIP PREMIUM", description: "4 cortes + 4 barbas por mês", price: 249 },
-];
+const { data: barbers } = await useFetch<BarberCard[]>("/api/barbers");
+const { data: plans } = await useFetch<Array<{ id: string; name: string; description: string; price: number }>>("/api/plans");
 </script>
 
 <template>
@@ -52,9 +57,37 @@ const plans = [
           <figure class="border-2 border-[#09090B] bg-white shadow-[8px_8px_0px_#09090B]">
             <img src="https://images.unsplash.com/photo-1585747860715-2ba37e788b70?auto=format&fit=crop&w=900&q=85" alt="Interior moderno de barbearia" class="h-90 w-full object-cover">
           </figure>
-          <div class="border-2 border-[#09090B] bg-white shadow-[8px_8px_0px_#09090B]">
-            <BarberPoleThree />
-          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="border-b-2 border-[#09090B] bg-white px-4 py-14">
+      <article class="mx-auto grid max-w-6xl gap-8 border-2 border-[#09090B] bg-[#F4F4F5] p-6 shadow-[8px_8px_0px_#09090B] md:grid-cols-[1fr_0.8fr] md:items-center md:p-10">
+        <div>
+          <p class="inline-block border-2 border-[#09090B] bg-[#F59E0B] px-3 py-2 font-black">DESDE A FUNDAÇÃO</p>
+          <h2 class="mt-4 text-3xl font-black sm:text-4xl">Nossa História &amp; Tradição</h2>
+          <p class="mt-4 text-lg leading-relaxed">A NAVALHA &amp; CORTE nasceu para manter viva a tradição da barbearia: conversa acolhedora, técnica cuidadosa e o ritual clássico da toalha quente. Recebemos crianças, jovens, adultos e idosos com respeito e atenção em cada detalhe.</p>
+          <NuxtLink to="/agendamento" class="mt-6 inline-flex min-h-14 items-center border-2 border-[#09090B] bg-[#F59E0B] px-5 font-black shadow-[4px_4px_0px_#09090B]">Conheça a barbearia</NuxtLink>
+        </div>
+        <img src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=1000&q=85" alt="Barbeiro preparando uma toalha quente para o atendimento" class="h-72 w-full border-2 border-[#09090B] object-cover">
+      </article>
+    </section>
+
+    <section class="bg-[#F4F4F5] px-4 py-12">
+      <div class="mx-auto max-w-6xl">
+        <p class="inline-block border-2 border-[#09090B] bg-[#F59E0B] px-3 py-2 font-black">QUEM CUIDA DO SEU CORTE</p>
+        <h2 class="mt-4 text-4xl font-black">Nossa equipe</h2>
+        <div class="mt-6 grid gap-5 md:grid-cols-2">
+          <article v-for="barber in barbers" :key="barber.id" class="grid overflow-hidden border-2 border-[#09090B] bg-white shadow-[4px_4px_0px_#09090B] sm:grid-cols-[180px_1fr]">
+            <img v-if="barber.photoUrl" :src="barber.photoUrl" :alt="`Retrato de ${barber.name}`" class="h-56 w-full object-cover sm:h-full">
+            <div v-else class="grid min-h-48 place-items-center bg-[#F59E0B] text-5xl font-black">{{ barber.name.slice(0, 1) }}</div>
+            <div class="p-5">
+              <h3 class="text-2xl font-black">{{ barber.name }}</h3>
+              <p class="mt-2 font-black text-[#09090B]">{{ barber.specialty }}</p>
+              <p class="mt-3">{{ barber.bio }}</p>
+            </div>
+          </article>
+          <p v-if="!barbers?.length" class="border-2 border-[#09090B] bg-white p-5 font-bold">Nossa equipe estará disponível em breve.</p>
         </div>
       </div>
     </section>
@@ -87,12 +120,13 @@ const plans = [
         <div class="mt-6 grid gap-5 md:grid-cols-2">
           <article
             v-for="plan in plans"
-            :key="plan.name"
+            :key="plan.id"
             class="border-2 border-[#09090B] bg-[#F59E0B] p-6 shadow-[8px_8px_0px_#09090B]"
           >
             <h3 class="text-2xl font-black">{{ plan.name }}</h3>
             <p class="mt-3">{{ plan.description }}</p>
-            <p class="mt-4 text-3xl font-black">R$ {{ plan.price }}/MÊS</p>
+            <p class="mt-4 text-3xl font-black">R$ {{ plan.price.toFixed(2) }}/MÊS</p>
+            <NuxtLink to="/planos" class="mt-5 inline-flex min-h-12 items-center border-2 border-[#09090B] bg-white px-4 font-black shadow-[4px_4px_0px_#09090B]">Ver plano</NuxtLink>
           </article>
         </div>
       </div>

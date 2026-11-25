@@ -34,6 +34,9 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: "Dados de pagamento inválidos" });
   }
   const data = parsed.data;
+  if (!isAdmin && (data.method === "DINHEIRO" || data.timing !== "LIQUIDADO_AGORA")) {
+    throw createError({ statusCode: 403, statusMessage: "Pagamento presencial deve ser registrado pela equipe" });
+  }
   const feeRate = data.method === "CREDITO"
     ? data.installments > 1 ? 0.0399 : 0.0299
     : data.method === "DEBITO" ? 0.0199 : 0;
@@ -41,6 +44,8 @@ export default defineEventHandler(async (event) => {
   const payment = await prisma.$transaction(async (tx) => {
     let gross: number;
     let barberId: string | null = null;
+    let subscriptionPlan: { id: string; cutCredits: number; beardCredits: number; customerId: string } | null = null;
+    let purchasePlanId: string | null = null;
     if (data.appointmentId) {
       const appointment = await tx.appointment.findUnique({
         where: { id: data.appointmentId },
@@ -116,24 +121,8 @@ export default defineEventHandler(async (event) => {
       if (activeSubscription) {
         throw createError({ statusCode: 409, statusMessage: "Você já possui uma assinatura ativa" });
       }
-      await tx.customerSubscription.updateMany({
-        where: { customerId: customer.id, active: true },
-        data: { active: false },
-      });
-      await tx.customerSubscription.create({
-        data: {
-          customerId: customer.id,
-          planId: plan.id,
-          remainingCredits: plan.cutCredits + plan.beardCredits,
-          startsAt: new Date(),
-          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-          active: true,
-        },
-      });
-      await tx.customer.update({
-        where: { id: customer.id },
-        data: { subscriptionId: plan.id },
-      });
+      purchasePlanId = plan.id;
+      subscriptionPlan = { ...plan, customerId: customer.id };
     } else {
       throw createError({ statusCode: 400, statusMessage: "Informe uma comanda, serviços ou plano" });
     }
@@ -155,11 +144,15 @@ export default defineEventHandler(async (event) => {
       ? (amountReceivedCents - grossCents) / 100
       : 0;
 
+    const paymentStatus = isAdmin
+      ? data.method === "PIX" && data.timing === "PRESENCIAL_BALCAO" ? "PENDENTE" : "CONFIRMADO"
+      : "PENDENTE";
     const payment = await tx.paymentTransaction.create({
       data: {
         appointmentId: data.appointmentId,
+        planId: purchasePlanId,
         method: data.method,
-        status: data.method === "PIX" && data.timing === "PRESENCIAL_BALCAO" ? "PENDENTE" : "CONFIRMADO",
+        status: paymentStatus,
         timing: data.timing,
         grossAmount: gross,
         feeAmount,
@@ -171,9 +164,30 @@ export default defineEventHandler(async (event) => {
         cardAuthorization: data.cardAuthorization,
         gatewayProvider: data.gatewayProvider,
         gatewayTransactionId: data.gatewayTransactionId,
-        paidAt: data.method === "PIX" && data.timing === "PRESENCIAL_BALCAO" ? null : new Date(),
+        paidAt: paymentStatus === "CONFIRMADO" ? new Date() : null,
       },
     });
+
+    if (subscriptionPlan && payment.status === "CONFIRMADO") {
+      await tx.customerSubscription.updateMany({
+        where: { customerId: subscriptionPlan.customerId, active: true },
+        data: { active: false },
+      });
+      await tx.customerSubscription.create({
+        data: {
+          customerId: subscriptionPlan.customerId,
+          planId: subscriptionPlan.id,
+          remainingCredits: subscriptionPlan.cutCredits + subscriptionPlan.beardCredits,
+          startsAt: new Date(),
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          active: true,
+        },
+      });
+      await tx.customer.update({
+        where: { id: subscriptionPlan.customerId },
+        data: { subscriptionId: subscriptionPlan.id },
+      });
+    }
 
     if (data.appointmentId && payment.status === "CONFIRMADO") {
       const appointment = await tx.appointment.findUnique({

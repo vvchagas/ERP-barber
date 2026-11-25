@@ -60,8 +60,11 @@ model AccessLog {
 model Barber {
   id              String           @id @default(cuid())
   name            String
+  specialty       String           @default("Corte masculino")
+  bio             String           @default("")
+  photoUrl        String?
   phone           String?
-  commissionRate  Decimal          @db.Decimal(5, 4)
+  commissionRate  Decimal          @db.Decimal(5, 4) @default(0.3000)
   active          Boolean          @default(true)
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
@@ -106,16 +109,20 @@ model Customer {
   id             String        @id @default(cuid())
   name           String
   phone          String        @unique
-  email          String?
+  email          String?       @unique
+  avatarUrl      String?
   passwordHash   String?
   passwordSalt   String?
   notes          String        @default("")
+  silentCut      Boolean       @default(false)
+  lgpdConsent    Boolean       @default(false)
+  lgpdConsentAt  DateTime      @default(now())
+  anonymizedAt   DateTime?
   silentPreference Boolean     @default(false)
   favoriteBarberId String?
   theme          String        @default("light")
-  fontScale      Int           @default(100)
+  fontScale      String        @default("100")
   seniorMode     Boolean       @default(false)
-  lgpdConsentAt  DateTime?
   anonymousHash  String?       @unique
   subscriptionId String?
   subscription   SubscriptionPlan? @relation(fields: [subscriptionId], references: [id])
@@ -185,6 +192,7 @@ model AppointmentService {
 model PaymentTransaction {
   id                 String        @id @default(cuid())
   appointmentId      String?
+  planId             String?
   appointment        Appointment?  @relation(fields: [appointmentId], references: [id])
   method             PaymentMethod
   status             PaymentStatus @default(PENDENTE)

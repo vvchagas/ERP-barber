@@ -1,6 +1,6 @@
 <script setup lang="ts">
 interface Service { id: string; name: string; description: string; durationMin: number; price: number }
-interface Barber { id: string; name: string }
+interface Barber { id: string; name: string; specialty?: string; photoUrl?: string | null }
 
 const { data: services } = await useFetch<Service[]>("/api/services");
 const { data: barbers } = await useFetch<Barber[]>("/api/barbers");
@@ -19,9 +19,20 @@ const paymentTiming = ref<"PRESENCIAL_BALCAO" | "LIQUIDADO_AGORA" | "PLANO">("PR
 const slots = ref<string[]>([]);
 const busy = ref(false);
 const errorMessage = ref("");
-const today = new Date();
-today.setHours(0, 0, 0, 0);
-const calendarCursor = ref(new Date(today.getFullYear(), today.getMonth(), 1));
+const { customer, refreshSession } = useCustomerAuth();
+const todayParts = new Intl.DateTimeFormat("en-US", {
+  timeZone: "America/Sao_Paulo",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+}).formatToParts(new Date());
+const todayValues = {
+  year: todayParts.find((part) => part.type === "year")?.value ?? "2000",
+  month: todayParts.find((part) => part.type === "month")?.value ?? "01",
+  day: todayParts.find((part) => part.type === "day")?.value ?? "01",
+};
+const todayKey = `${todayValues.year}-${todayValues.month}-${todayValues.day}`;
+const calendarCursor = ref(new Date(Number(todayValues.year), Number(todayValues.month) - 1, 1));
 
 const selectedServices = computed(() => (services.value ?? []).filter((item) => selectedServiceIds.value.includes(item.id)));
 const total = computed(() => selectedServices.value.reduce((sum, item) => sum + item.price, 0));
@@ -48,8 +59,21 @@ function dateKey(date: Date): string {
 }
 
 function canChooseDate(date: Date): boolean {
-  return date >= today && date.getDay() !== 0;
+  return date.getFullYear() === calendarCursor.value.getFullYear()
+    && date.getMonth() === calendarCursor.value.getMonth()
+    && dateKey(date) >= todayKey
+    && date.getDay() !== 0;
 }
+
+const isCurrentMonth = computed(() =>
+  calendarCursor.value.getFullYear() === Number(todayValues.year)
+  && calendarCursor.value.getMonth() === Number(todayValues.month) - 1,
+);
+const activeSubscriptions = computed(() => customer.value?.subscriptions.filter((subscription) =>
+  subscription.active && subscription.remainingCredits > 0 && new Date(subscription.expiresAt).getTime() > Date.now(),
+) ?? []);
+const availableCredits = computed(() => activeSubscriptions.value.reduce((sum, subscription) => sum + subscription.remainingCredits, 0));
+const nearestExpiry = computed(() => activeSubscriptions.value[0]?.expiresAt);
 
 function selectDate(date: Date): void {
   if (!canChooseDate(date)) return;
@@ -118,11 +142,24 @@ async function finish(): Promise<void> {
     busy.value = false;
   }
 }
+
+onMounted(async () => {
+  await refreshSession();
+  if (!customer.value) return;
+  customerName.value = customer.value.name;
+  customerPhone.value = customer.value.phone;
+  customerEmail.value = customer.value.email ?? "";
+  noConversation.value = customer.value.silentCut;
+  if (customer.value.favoriteBarberId) selectedBarberId.value = customer.value.favoriteBarberId;
+});
 </script>
 
 <template>
   <main class="min-h-screen bg-(--muted-bg) px-4 pb-12 pt-24">
     <div class="mx-auto max-w-6xl">
+      <aside v-if="availableCredits > 0" class="mb-5 border-2 border-[#09090B] bg-[#16A34A] p-4 font-black text-white shadow-[4px_4px_0px_#09090B]" role="status">
+        Você possui {{ availableCredits }} créditos ativos no seu Plano{{ nearestExpiry ? ` — válidos até ${new Date(nearestExpiry).toLocaleDateString("pt-BR")}` : "" }}.
+      </aside>
       <div class="grid grid-cols-3 border-2 border-(--border) bg-(--surface-bg)">
         <p v-for="number in 3" :key="number" class="min-h-12 py-3 text-center font-black" :class="step >= number ? 'bg-[#F59E0B] text-[#09090B]' : ''">{{ number }}</p>
       </div>
@@ -141,21 +178,23 @@ async function finish(): Promise<void> {
         <fieldset class="mt-5">
           <legend class="font-black">Escolha o barbeiro</legend>
           <div class="mt-3 grid gap-3 sm:grid-cols-2">
-            <button v-for="barber in barbers" :key="barber.id" type="button" class="flex min-h-20 items-center gap-3 border-2 border-(--border) p-3 text-left" :class="selectedBarberId === barber.id ? 'bg-[#F59E0B] text-[#09090B]' : 'bg-(--surface-bg)'" @click="selectedBarberId = barber.id; loadSlots()">
-              <span class="grid h-12 w-12 place-items-center border-2 border-(--border) bg-(--muted-bg) font-black">{{ barber.name.slice(0, 2).toUpperCase() }}</span>
-              <strong>{{ barber.name }}</strong>
+            <button v-for="barber in barbers" :key="barber.id" type="button" class="flex min-h-24 items-center gap-3 border-2 border-(--border) p-3 text-left" :class="selectedBarberId === barber.id ? 'bg-[#F59E0B] text-[#09090B]' : 'bg-(--surface-bg)'" @click="selectedBarberId = barber.id; loadSlots()">
+              <img v-if="barber.photoUrl" :src="barber.photoUrl" :alt="`Retrato de ${barber.name}`" class="h-16 w-16 border-2 border-(--border) object-cover">
+              <span v-else class="grid h-16 w-16 place-items-center border-2 border-(--border) bg-(--muted-bg) font-black">{{ barber.name.slice(0, 2).toUpperCase() }}</span>
+              <span><strong class="block">{{ barber.name }}</strong><span class="block text-sm">{{ barber.specialty }}</span></span>
             </button>
           </div>
         </fieldset>
         <div class="mt-6 border-2 border-(--border) p-4">
           <div class="flex items-center justify-between">
-            <button type="button" class="min-h-12 border-2 border-(--border) px-4 font-black" @click="changeMonth(-1)">Anterior</button>
+            <button v-if="!isCurrentMonth" type="button" class="min-h-12 border-2 border-(--border) px-4 font-black" @click="changeMonth(-1)">Anterior</button>
+            <span v-else class="min-h-12" aria-hidden="true"></span>
             <h2 class="text-xl font-black">{{ calendarCursor.toLocaleDateString("pt-BR", { month: "long", year: "numeric" }) }}</h2>
             <button type="button" class="min-h-12 border-2 border-(--border) px-4 font-black" @click="changeMonth(1)">Próximo</button>
           </div>
           <div class="mt-4 grid grid-cols-7 gap-1">
             <span v-for="dayName in ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']" :key="dayName" class="text-center text-sm font-black">{{ dayName }}</span>
-            <button v-for="date in calendarDays" :key="dateKey(date)" type="button" class="min-h-12 border-2 border-(--border) text-sm font-black" :disabled="!canChooseDate(date)" :class="[date.getMonth() !== calendarCursor.getMonth() ? 'opacity-40' : '', selectedDate === dateKey(date) ? 'bg-[#F59E0B] text-[#09090B]' : 'bg-(--surface-bg)']" @click="selectDate(date)">{{ date.getDate() }}</button>
+            <button v-for="date in calendarDays" :key="dateKey(date)" type="button" class="min-h-12 border-2 border-(--border) text-sm font-black disabled:cursor-not-allowed disabled:opacity-30" :disabled="!canChooseDate(date)" :aria-label="date.toLocaleDateString('pt-BR')" :class="selectedDate === dateKey(date) ? 'bg-[#F59E0B] text-[#09090B]' : 'bg-(--surface-bg)'" @click="selectDate(date)">{{ date.getDate() }}</button>
           </div>
         </div>
         <fieldset class="mt-6">
@@ -184,7 +223,7 @@ async function finish(): Promise<void> {
         <fieldset class="mt-5"><legend class="font-black">Forma de pagamento</legend><div class="mt-2 grid gap-3 sm:grid-cols-3">
           <label class="min-h-14 border-2 border-(--border) p-3" :class="paymentTiming === 'PRESENCIAL_BALCAO' ? 'bg-[#F59E0B] text-[#09090B]' : ''"><input v-model="paymentTiming" type="radio" value="PRESENCIAL_BALCAO" class="mr-2"> Pagar no balcão</label>
           <label class="min-h-14 border-2 border-(--border) p-3" :class="paymentTiming === 'LIQUIDADO_AGORA' ? 'bg-[#F59E0B] text-[#09090B]' : ''"><input v-model="paymentTiming" type="radio" value="LIQUIDADO_AGORA" class="mr-2"> Pagar online agora</label>
-          <label class="min-h-14 border-2 border-(--border) p-3" :class="paymentTiming === 'PLANO' ? 'bg-[#F59E0B] text-[#09090B]' : ''"><input v-model="paymentTiming" type="radio" value="PLANO" class="mr-2"> Usar crédito do plano</label>
+          <label v-if="availableCredits > 0" class="min-h-14 border-2 border-(--border) p-3" :class="paymentTiming === 'PLANO' ? 'bg-[#F59E0B] text-[#09090B]' : ''"><input v-model="paymentTiming" type="radio" value="PLANO" class="mr-2"> Usar crédito do plano</label>
         </div></fieldset>
         <label class="mt-5 flex min-h-14 items-start gap-3 border-2 border-(--border) p-3 font-bold"><input v-model="lgpdConsent" type="checkbox" required class="mt-1 h-6 w-6"><span>Autorizo o tratamento dos meus dados para agendamento e lembretes, conforme a <NuxtLink to="/privacidade" class="underline">Política de Privacidade</NuxtLink>.</span></label>
         <p v-if="errorMessage" role="alert" class="mt-4 border-2 border-(--border) bg-[#EA580C] p-3 font-black text-white">{{ errorMessage }}</p>

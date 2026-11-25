@@ -24,13 +24,41 @@ async function main(): Promise<void> {
   await Promise.all([
     prisma.barber.upsert({
       where: { id: "barber-rafael" },
-      update: { name: "Rafael", commissionRate: 0.30, active: true },
-      create: { id: "barber-rafael", name: "Rafael", commissionRate: 0.30 },
+      update: {
+        name: "Rafael",
+        specialty: "Cortes clássicos e fades",
+        bio: "Especialista em acabamento preciso e estilos modernos.",
+        photoUrl: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=500&q=85",
+        commissionRate: 0.30,
+        active: true,
+      },
+      create: {
+        id: "barber-rafael",
+        name: "Rafael",
+        specialty: "Cortes clássicos e fades",
+        bio: "Especialista em acabamento preciso e estilos modernos.",
+        photoUrl: "https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=500&q=85",
+        commissionRate: 0.30,
+      },
     }),
     prisma.barber.upsert({
       where: { id: "barber-lucas" },
-      update: { name: "Lucas", commissionRate: 0.30, active: true },
-      create: { id: "barber-lucas", name: "Lucas", commissionRate: 0.30 },
+      update: {
+        name: "Lucas",
+        specialty: "Barbas e descoloração",
+        bio: "Foco em alinhamento de barba, técnicas de clareamento e contornos.",
+        photoUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=500&q=85",
+        commissionRate: 0.30,
+        active: true,
+      },
+      create: {
+        id: "barber-lucas",
+        name: "Lucas",
+        specialty: "Barbas e descoloração",
+        bio: "Foco em alinhamento de barba, técnicas de clareamento e contornos.",
+        photoUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=500&q=85",
+        commissionRate: 0.30,
+      },
     }),
   ]);
 
@@ -55,16 +83,19 @@ async function main(): Promise<void> {
     });
   }
 
-  await prisma.subscriptionPlan.upsert({
-    where: { id: "plan-clube-vip-mensal" },
-    update: { name: "Clube VIP Mensal", description: "2 cortes por mês", price: 149, servicesPerMonth: 2, cutCredits: 2, beardCredits: 0, active: true },
-    create: { id: "plan-clube-vip-mensal", name: "Clube VIP Mensal", description: "2 cortes por mês", price: 149, servicesPerMonth: 2, cutCredits: 2, beardCredits: 0 },
-  });
-  await prisma.subscriptionPlan.upsert({
-    where: { id: "plan-clube-vip-premium" },
-    update: { name: "Clube VIP Premium", description: "4 cortes + 4 barbas por mês", price: 249, servicesPerMonth: 4, cutCredits: 4, beardCredits: 4, active: true },
-    create: { id: "plan-clube-vip-premium", name: "Clube VIP Premium", description: "4 cortes + 4 barbas por mês", price: 249, servicesPerMonth: 4, cutCredits: 4, beardCredits: 4 },
-  });
+  const plans = [
+    ["plan-corte-essencial", "Plano Corte Essencial", "2 cortes por mês", 149, 2, 0],
+    ["plan-barba-alinhada", "Plano Barba Alinhada", "4 barbas por mês", 99, 0, 4],
+    ["plan-combo-classico", "Plano Combo Clássico", "2 cortes + 2 barbas por mês", 179, 2, 2],
+    ["plan-vip-black", "Plano VIP Black", "4 cortes + 4 barbas + sobrancelha e toalha quente por mês", 249, 4, 4],
+  ] as const;
+  for (const [id, name, description, price, cutCredits, beardCredits] of plans) {
+    await prisma.subscriptionPlan.upsert({
+      where: { id },
+      update: { name, description, price, servicesPerMonth: cutCredits + beardCredits, cutCredits, beardCredits, active: true },
+      create: { id, name, description, price, servicesPerMonth: cutCredits + beardCredits, cutCredits, beardCredits },
+    });
+  }
 }
 
 main()
