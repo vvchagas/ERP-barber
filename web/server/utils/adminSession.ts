@@ -72,24 +72,29 @@ export async function isAdminSessionValid(event: H3Event): Promise<boolean> {
   if (!claims) return false;
   const customer = await prisma.customer.findUnique({
     where: { id: claims.customerId },
-    select: { role: true, email: true },
+    select: { role: true, anonymizedAt: true },
   });
-  return customer?.role === "ADMIN";
+  return customer !== null
+    && customer.role === "ADMIN"
+    && customer.anonymizedAt === null;
 }
 
-export async function requireAdminSession(event: H3Event): Promise<void> {
+export async function requireAdminSession(
+  event: H3Event,
+): Promise<{ id: string; email: string | null }> {
   const claims = getAdminSessionClaims(event);
   if (!claims) {
     throw createError({ statusCode: 404, statusMessage: "Página não encontrada" });
   }
   const customer = await prisma.customer.findUnique({
     where: { id: claims.customerId },
-    select: { role: true },
+    select: { id: true, email: true, role: true, anonymizedAt: true },
   });
-  if (customer?.role !== "ADMIN") {
+  if (!customer || customer.role !== "ADMIN" || customer.anonymizedAt !== null) {
     clearAdminSession(event);
     throw createError({ statusCode: 404, statusMessage: "Página não encontrada" });
   }
+  return { id: customer.id, email: customer.email };
 }
 
 export function clearAdminSession(event: H3Event): void {

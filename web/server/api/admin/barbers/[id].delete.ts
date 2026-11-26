@@ -22,6 +22,6 @@ export default defineEventHandler(async (event) => {
     message: `${barber.name} foi removido(a) da equipe ativa.`,
     metadata: { resource: "barber", id: barber.id, action: "deleted" },
   });
-  await writeAccessLog(event, true, "admin_barber_deleted", "magic-key");
+  await writeAccessLog(event, true, "admin_barber_deleted", "admin-session");
   return { deleted: true, archived: appointments > 0 };
 });

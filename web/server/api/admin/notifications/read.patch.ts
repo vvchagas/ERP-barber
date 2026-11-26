@@ -20,6 +20,6 @@ export default defineEventHandler(async (event) => {
     where: parsed.data.all ? { read: false } : { id: parsed.data.id, read: false },
     data: { read: true },
   });
-  await writeAccessLog(event, true, "admin_notifications_read", "magic-key");
+  await writeAccessLog(event, true, "admin_notifications_read", "admin-session");
   return { updated: result.count };
 });

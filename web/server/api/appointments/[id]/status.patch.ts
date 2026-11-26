@@ -7,7 +7,7 @@ import { createAdminNotification } from "../../../utils/adminNotifications";
 const paramsSchema = z.object({ id: z.string().min(1).max(191) });
 const bodySchema = z.object({
   status: z.enum(["AGENDADO", "EM_ATENDIMENTO", "CONCLUIDO", "FALTOU", "CANCELADO"]),
-});
+}).strict();
 
 export default defineEventHandler(async (event) => {
   await requireAdminSession(event);
@@ -20,13 +20,21 @@ export default defineEventHandler(async (event) => {
   const appointment = await prisma.$transaction(async (tx) => {
     const previous = await tx.appointment.findUnique({
       where: { id: params.data.id },
-      include: { services: true, barber: true, customer: true },
+      select: {
+        id: true,
+        customerId: true,
+        status: true,
+        barberId: true,
+        services: { select: { unitPrice: true, quantity: true } },
+        barber: { select: { name: true, commissionRate: true } },
+        customer: { select: { id: true, name: true } },
+      },
     });
     if (!previous) throw createError({ statusCode: 404, statusMessage: "Agendamento não encontrado" });
     const updated = await tx.appointment.update({
       where: { id: previous.id },
       data: { status: body.data.status },
-      include: { customer: true, barber: true, payments: true },
+      select: { id: true, status: true },
     });
     if (previous.status !== body.data.status && body.data.status === "CANCELADO") {
       await createAdminNotification({
@@ -71,15 +79,5 @@ export default defineEventHandler(async (event) => {
     return updated;
   });
   await writeAccessLog(event, true, `appointment_status_${body.data.status}`, undefined);
-  return {
-    ...appointment,
-    payments: appointment.payments.map((payment) => ({
-      ...payment,
-      grossAmount: Number(payment.grossAmount),
-      feeAmount: Number(payment.feeAmount),
-      netAmount: Number(payment.netAmount),
-      amountReceived: Number(payment.amountReceived),
-      changeGiven: Number(payment.changeGiven),
-    })),
-  };
+  return appointment;
 });

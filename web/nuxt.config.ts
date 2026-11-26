@@ -74,5 +74,6 @@ export default defineNuxtConfig({
 
   routeRules: {
     "/admin/**": { robots: false },
+    "/caixa": { redirect: { to: "/admin?tab=caixa", statusCode: 302 } },
   },
 });

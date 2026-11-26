@@ -17,6 +17,6 @@ export default defineEventHandler(async (event) => {
     message: `Evento de teste: ${parsed.data.label}. Nenhum valor financeiro foi registrado.`,
     metadata: { simulated: true, label: parsed.data.label },
   });
-  await writeAccessLog(event, true, "payment_test_simulated", "magic-key");
+  await writeAccessLog(event, true, "payment_test_simulated", "admin-session");
   return { simulated: true };
 });

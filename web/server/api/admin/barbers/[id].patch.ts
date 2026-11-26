@@ -25,6 +25,6 @@ export default defineEventHandler(async (event) => {
     message: `Os dados de ${barber.name} foram atualizados.`,
     metadata: { resource: "barber", id: barber.id, action: "updated" },
   });
-  await writeAccessLog(event, true, "admin_barber_updated", "magic-key");
+  await writeAccessLog(event, true, "admin_barber_updated", "admin-session");
   return barber;
 });

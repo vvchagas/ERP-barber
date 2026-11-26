@@ -15,6 +15,8 @@ const uploadingAvatar = ref(false);
 const errorMessage = ref("");
 const statusMessage = ref("");
 const confirmDelete = ref(false);
+const invitePin = ref("");
+const redeemingPin = ref(false);
 
 function initials(name: string): string {
   return name.split(/\s+/).slice(0, 2).map((part) => part.charAt(0).toUpperCase()).join("");
@@ -159,6 +161,25 @@ async function deleteAccount(): Promise<void> {
   }
 }
 
+async function redeemInvitePin(): Promise<void> {
+  errorMessage.value = "";
+  statusMessage.value = "";
+  redeemingPin.value = true;
+  try {
+    const response = await $fetch<{ role: string }>("/api/customer/redeem-pin", {
+      method: "POST",
+      body: { pin: invitePin.value },
+    });
+    invitePin.value = "";
+    await refreshSession();
+    statusMessage.value = `Código resgatado. Cargo ativado: ${response.role}.`;
+  } catch (error: unknown) {
+    errorMessage.value = error instanceof Error ? error.message : "Não foi possível resgatar o código.";
+  } finally {
+    redeemingPin.value = false;
+  }
+}
+
 onMounted(async () => {
   await refreshSession();
   if (customer.value) {
@@ -198,7 +219,7 @@ onMounted(async () => {
         <section class="border-2 border-(--border) bg-(--surface-bg) p-5 shadow-[8px_8px_0px_#09090B]">
           <h2 class="text-2xl font-black">Meu perfil</h2>
           <div class="mt-5 flex flex-wrap items-center gap-5">
-            <img v-if="avatarUrl" :src="avatarUrl" alt="Foto do perfil" class="h-24 w-24 border-2 border-(--border) object-cover">
+            <img v-if="avatarUrl" :src="avatarUrl" alt="Foto do perfil" class="h-24 w-24 border-2 border-(--border) object-cover" loading="lazy" decoding="async">
             <span v-else class="grid h-24 w-24 place-items-center border-2 border-(--border) bg-[#F59E0B] text-3xl font-black text-[#09090B]">{{ initials(profile.name || customer?.name || "NC") }}</span>
             <label class="inline-flex min-h-14 cursor-pointer items-center border-2 border-[#09090B] bg-[#F59E0B] px-4 font-black text-[#09090B] shadow-[4px_4px_0px_#09090B]">
               {{ uploadingAvatar ? "Processando foto..." : "Enviar foto de perfil" }}
@@ -245,7 +266,18 @@ onMounted(async () => {
               <option v-for="barber in barbers" :key="barber.id" :value="barber.id">{{ barber.name }}</option>
             </select>
           </label>
-          <p role="status" class="mt-4 border-2 border-(--border) bg-[#16A34A] p-3 font-black text-white">{{ savingPreferences ? "Salvando preferências..." : "Preferências salvas neste aparelho e no perfil quando conectado." }}</p>
+          <p role="status" class="mt-4 border-2 border-(--border) bg-[#16A34A] p-3 font-black text-[#09090B]">{{ savingPreferences ? "Salvando preferências..." : "Preferências salvas neste aparelho e no perfil quando conectado." }}</p>
+        </section>
+
+        <section v-if="customer" class="border-2 border-(--border) bg-(--surface-bg) p-5 shadow-[4px_4px_0px_#09090B]">
+          <h2 class="text-xl font-black">Código de Equipe (8 Dígitos)</h2>
+          <p class="mt-1">Insira um código fornecido pela administração para ativar seu cargo de equipe.</p>
+          <form class="mt-4 flex flex-wrap gap-3" @submit.prevent="redeemInvitePin">
+            <label class="sr-only" for="team-invite-pin">Código de equipe</label>
+            <input id="team-invite-pin" v-model="invitePin" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{8}" maxlength="8" minlength="8" required aria-label="Código de equipe com oito dígitos" class="min-h-12 w-full max-w-xs border-2 border-(--border) bg-(--surface-bg) px-3 font-mono text-lg tracking-[0.3em]">
+            <button type="submit" class="min-h-12 border-2 border-[#09090B] bg-[#F59E0B] px-4 font-black text-[#09090B]" :disabled="redeemingPin || invitePin.length !== 8">{{ redeemingPin ? "Validando..." : "Ativar cargo" }}</button>
+          </form>
+          <p class="mt-2 text-sm font-bold">Seu cargo atual: {{ customer.role }}</p>
         </section>
 
         <section class="border-2 border-[#09090B] bg-[#FFFFFF] p-5 shadow-[8px_8px_0px_#09090B]">
@@ -255,9 +287,9 @@ onMounted(async () => {
         </section>
       </div>
       <p v-if="errorMessage" role="alert" class="mt-5 border-2 border-[#09090B] bg-[#DC2626] p-4 font-black text-white">{{ errorMessage }}</p>
-      <p v-if="statusMessage" role="status" class="mt-5 border-2 border-[#09090B] bg-[#16A34A] p-4 font-black text-white">{{ statusMessage }}</p>
+      <p v-if="statusMessage" role="status" class="mt-5 border-2 border-[#09090B] bg-[#16A34A] p-4 font-black text-[#09090B]">{{ statusMessage }}</p>
     </div>
-    <ConfirmModal
+    <LazyConfirmModal
       :open="confirmDelete"
       title="confirm-delete-title"
       description="Esta ação é irreversível. Seus dados pessoais serão anonimizados e as observações pessoais dos agendamentos serão removidas."

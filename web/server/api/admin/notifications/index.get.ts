@@ -19,7 +19,7 @@ const querySchema = z.object({
 
 export default defineEventHandler(async (event) => {
   await requireAdminSession(event);
-  await writeAccessLog(event, true, "admin_notifications_list", "magic-key");
+  await writeAccessLog(event, true, "admin_notifications_list", "admin-session");
   const parsed = querySchema.safeParse(getQuery(event));
   if (!parsed.success) {
     throw createError({ statusCode: 400, statusMessage: "Filtro de notificações inválido" });

@@ -120,6 +120,29 @@ html.high-contrast [class~="text-[#09090B]"] {
   color: var(--fg);
 }
 
+html.dark [class~="bg-[#F59E0B]"][class~="text-[#09090B]"],
+html.high-contrast [class~="bg-[#F59E0B]"][class~="text-[#09090B]"] {
+  color: #09090B;
+}
+
+html.dark [class~="bg-[#F59E0B]"],
+html.high-contrast [class~="bg-[#F59E0B]"] {
+  color: #09090B;
+}
+
+html.dark [class~="bg-[#16A34A]"],
+html.high-contrast [class~="bg-[#16A34A]"],
+html.dark [class~="bg-[#EA580C]"],
+html.high-contrast [class~="bg-[#EA580C]"] {
+  color: #09090B;
+}
+
+html.dark [class~="bg-[#FEF3C7]"],
+html.high-contrast [class~="bg-[#FEF3C7]"] {
+  background-color: var(--muted-bg);
+  color: var(--fg);
+}
+
 html.dark [class~="border-[#09090B]"],
 html.high-contrast [class~="border-[#09090B]"] {
   border-color: var(--border);

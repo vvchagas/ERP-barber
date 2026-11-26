@@ -39,6 +39,6 @@ export default defineEventHandler(async (event) => {
     message: `Os dados do plano ${plan.name} foram atualizados.`,
     metadata: { resource: "plan", id: plan.id, action: "updated" },
   });
-  await writeAccessLog(event, true, "admin_plan_updated", "magic-key");
+  await writeAccessLog(event, true, "admin_plan_updated", "admin-session");
   return plan;
 });

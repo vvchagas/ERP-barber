@@ -10,8 +10,9 @@ interface Plan {
   beardCredits: number;
 }
 
-const { data: plans } = await useFetch<Plan[]>("/api/plans");
+const { data: plans, pending: plansPending } = await useFetch<Plan[]>("/api/plans");
 const { customer, refreshSession } = useCustomerAuth();
+const { reveal } = useScrollReveal();
 const activeSubscriptions = computed(() => customer.value?.subscriptions.filter((subscription) =>
   subscription.active && subscription.remainingCredits > 0 && new Date(subscription.expiresAt).getTime() > Date.now(),
 ) ?? []);
@@ -35,12 +36,13 @@ function formatPrice(value: number): string {
       <aside class="mt-6 border-2 border-(--border) bg-[#F59E0B] p-4 text-[#09090B]">
         <strong>Regras:</strong> créditos válidos por 30 dias • atendimento de segunda a sábado, das 08h às 19h • cancelamento até 2h antes para não perder crédito.
       </aside>
-      <aside v-if="availableCredits > 0" class="mt-5 border-2 border-[#09090B] bg-[#16A34A] p-4 font-black text-white shadow-[4px_4px_0px_#09090B]" role="status">
+      <aside v-if="availableCredits > 0" class="mt-5 border-2 border-[#09090B] bg-[#16A34A] p-4 font-black text-[#09090B] shadow-[4px_4px_0px_#09090B]" role="status">
         Você possui {{ availableCredits }} créditos ativos no seu Plano{{ nextExpiry ? ` — válidos até ${new Date(nextExpiry).toLocaleDateString("pt-BR")}` : "" }}.
         <NuxtLink to="/agendamento" class="ml-2 underline">Agendar atendimento</NuxtLink>
       </aside>
       <div class="mt-6 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-        <article v-for="plan in plans" :key="plan.id" class="relative border-2 border-(--border) bg-(--surface-bg) p-5 shadow-[8px_8px_0px_#09090B]">
+        <BrutalSkeleton v-if="plansPending" variant="card" :count="4" class="md:col-span-2 lg:col-span-4" />
+        <article v-for="plan in plans" :key="plan.id" :ref="reveal" class="relative border-2 border-(--border) bg-(--surface-bg) p-5 shadow-[8px_8px_0px_#09090B]">
           <span v-if="plan.promoPrice !== null && plan.promoPrice < plan.price" class="absolute right-2 top-2 border-2 border-[#09090B] bg-[#DC2626] px-2 py-1 text-xs font-black uppercase tracking-wider text-white">{{ plan.promoLabel || "PROMOÇÃO" }}</span>
           <h2 class="text-2xl font-black">{{ plan.name }}</h2>
           <p class="mt-3 min-h-12">{{ plan.description }}</p>

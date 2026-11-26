@@ -85,6 +85,39 @@ interface NotificationsResponse {
   unreadCount: number;
 }
 
+async function generateRolePin(): Promise<void> {
+  pageMessage.value = "";
+  try {
+    const response = await $fetch<{ pin: string; expiresInSeconds: number }>("/api/admin/role-pins", {
+      method: "POST",
+      body: { targetRole: generatedPinRole.value },
+    });
+    generatedPin.value = response.pin;
+    pinRemainingSeconds.value = response.expiresInSeconds;
+    if (pinTimer) clearInterval(pinTimer);
+    pinTimer = setInterval(() => {
+      pinRemainingSeconds.value = Math.max(0, pinRemainingSeconds.value - 1);
+      if (pinRemainingSeconds.value === 0 && pinTimer) {
+        clearInterval(pinTimer);
+        pinTimer = undefined;
+        generatedPin.value = "";
+      }
+    }, 1000);
+  } catch (error: unknown) {
+    pageMessage.value = error instanceof Error ? error.message : "Não foi possível gerar o código.";
+  }
+}
+
+async function copyRolePin(): Promise<void> {
+  if (!generatedPin.value) return;
+  try {
+    await navigator.clipboard.writeText(generatedPin.value);
+    pageMessage.value = "Código copiado. Ele é exibido somente nesta sessão e expira em 15 minutos.";
+  } catch {
+    pageMessage.value = "Não foi possível copiar. Anote o código exibido.";
+  }
+}
+
 const route = useRoute();
 const router = useRouter();
 const dashboard = ref<Dashboard | null>(null);
@@ -95,6 +128,7 @@ const unreadCount = ref(0);
 const selectedCategory = ref("TODAS");
 const notificationsOpen = ref(false);
 const busy = ref(false);
+const loading = ref(true);
 const busyId = ref("");
 const pageMessage = ref("");
 const activeTab = computed<Tab>(() => {
@@ -155,6 +189,10 @@ const planForm = reactive({
 const editingBarberId = ref("");
 const editingServiceId = ref("");
 const editingPlanId = ref("");
+const generatedPin = ref("");
+const generatedPinRole = ref<"BARBER" | "ADMIN">("BARBER");
+const pinRemainingSeconds = ref(0);
+let pinTimer: ReturnType<typeof setInterval> | undefined;
 const cashAppointmentId = ref("");
 const cashMethod = ref<PaymentMethod>("PIX");
 const cashAmount = ref(0);
@@ -165,6 +203,7 @@ const cashChange = computed(() => cashMethod.value === "DINHEIRO"
   : 0);
 
 async function loadPanel(): Promise<void> {
+  loading.value = true;
   pageMessage.value = "";
   try {
     const [stats, appointmentRows, catalogData, notificationData] = await Promise.all([
@@ -180,10 +219,13 @@ async function loadPanel(): Promise<void> {
     unreadCount.value = notificationData.unreadCount;
   } catch (error: unknown) {
     pageMessage.value = error instanceof Error ? error.message : "Não foi possível carregar o painel.";
+  } finally {
+    loading.value = false;
   }
 }
 
 onMounted(() => { void loadPanel(); });
+onBeforeUnmount(() => { if (pinTimer) clearInterval(pinTimer); });
 
 async function setTab(tab: Tab): Promise<void> {
   await router.replace({ path: "/admin", query: { ...route.query, tab } });
@@ -480,7 +522,10 @@ async function refreshPanel(): Promise<void> {
 
       <p v-if="pageMessage" class="mt-5 border-2 border-[#09090B] bg-[#FEF3C7] p-3 font-bold" role="status">{{ pageMessage }}</p>
 
-      <section v-if="activeTab === 'caixa'" class="mt-6 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+      <section v-if="loading" class="mt-6" aria-label="Carregando dados administrativos">
+        <BrutalSkeleton variant="card" :count="4" />
+      </section>
+      <section v-else-if="activeTab === 'caixa'" class="mt-6 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         <article class="border-2 border-[#09090B] bg-white p-5 shadow-[8px_8px_0px_#09090B]">
           <h2 class="text-2xl font-black">FRENTE DE CAIXA / PDV</h2>
           <label class="mt-5 block font-black">COMANDA / AGENDAMENTO
@@ -527,7 +572,7 @@ async function refreshPanel(): Promise<void> {
               <td class="p-3">{{ new Date(item.scheduledAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) }}</td>
               <td class="p-3 font-black">{{ item.status }}</td>
               <td class="p-3"><div class="flex flex-wrap gap-2">
-                <button type="button" class="min-h-11 border-2 border-[#09090B] bg-[#16A34A] px-3 font-black text-white" :disabled="busyId === item.id || item.status === 'CONCLUIDO'" @click="setAppointmentStatus(item.id, 'CONCLUIDO')">CONCLUÍDO</button>
+                <button type="button" class="min-h-11 border-2 border-[#09090B] bg-[#16A34A] px-3 font-black text-[#09090B]" :disabled="busyId === item.id || item.status === 'CONCLUIDO'" @click="setAppointmentStatus(item.id, 'CONCLUIDO')">CONCLUÍDO</button>
                 <button type="button" class="min-h-11 border-2 border-[#09090B] bg-[#DC2626] px-3 font-black text-white" :disabled="busyId === item.id || item.status === 'CANCELADO'" @click="setAppointmentStatus(item.id, 'CANCELADO')">CANCELAR</button>
               </div></td>
             </tr></tbody>
@@ -537,19 +582,37 @@ async function refreshPanel(): Promise<void> {
       </section>
 
       <section v-else-if="activeTab === 'equipe'" class="mt-6 grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
+        <article class="border-2 border-[#09090B] bg-[#FEF3C7] p-5 shadow-[8px_8px_0px_#09090B] lg:col-span-2">
+          <h2 class="text-2xl font-black">GERADOR DE CÓDIGO DE EQUIPE</h2>
+          <p class="mt-2">PIN de uso único, válido por 15 minutos. Compartilhe com a pessoa correta.</p>
+          <div class="mt-4 flex flex-wrap items-end gap-3">
+            <label class="font-black">CARGO
+              <select v-model="generatedPinRole" class="mt-2 min-h-12 border-2 border-[#09090B] bg-white px-3">
+                <option value="BARBER">BARBEIRO</option>
+                <option value="ADMIN">ADMIN</option>
+              </select>
+            </label>
+            <button type="button" class="min-h-12 border-2 border-[#09090B] bg-[#F59E0B] px-4 font-black" @click="generateRolePin">GERAR PIN</button>
+            <div v-if="generatedPin" class="flex items-center gap-3 border-2 border-[#09090B] bg-white px-4 py-2">
+              <output class="font-mono text-2xl font-black tracking-[0.3em]">{{ generatedPin }}</output>
+              <span class="font-bold">{{ Math.floor(pinRemainingSeconds / 60) }}:{{ String(pinRemainingSeconds % 60).padStart(2, "0") }}</span>
+              <button type="button" class="min-h-10 border-2 border-[#09090B] bg-[#09090B] px-3 font-black text-white" @click="copyRolePin">COPIAR</button>
+            </div>
+          </div>
+        </article>
         <form class="h-fit border-2 border-[#09090B] bg-white p-5 shadow-[8px_8px_0px_#09090B]" @submit.prevent="saveBarber">
           <h2 class="text-2xl font-black">{{ editingBarberId ? "EDITAR BARBEIRO" : "CADASTRAR BARBEIRO" }}</h2>
           <label class="mt-4 block font-black">NOME<input v-model="barberForm.name" required maxlength="100" class="mt-2 min-h-12 w-full border-2 border-[#09090B] px-3"></label>
           <label class="mt-4 block font-black">ESPECIALIDADE<input v-model="barberForm.specialty" required maxlength="120" class="mt-2 min-h-12 w-full border-2 border-[#09090B] px-3"></label>
           <label class="mt-4 block font-black">BIO<textarea v-model="barberForm.bio" maxlength="1000" class="mt-2 min-h-24 w-full border-2 border-[#09090B] p-3"></textarea></label>
           <label class="mt-4 block font-black">FOTO WEBP (150 × 150, até 20 KB)<input type="file" accept="image/*" class="mt-2 block w-full border-2 border-[#09090B] p-2" @change="uploadBarberPhoto"></label>
-          <img v-if="barberForm.photoUrl" :src="barberForm.photoUrl" alt="Prévia da foto do barbeiro" class="mt-3 h-24 w-24 border-2 border-[#09090B] object-cover">
+          <img v-if="barberForm.photoUrl" :src="barberForm.photoUrl" alt="Prévia da foto do barbeiro" class="mt-3 h-24 w-24 border-2 border-[#09090B] object-cover" loading="lazy" decoding="async">
           <label class="mt-4 flex min-h-12 items-center gap-2 font-bold"><input v-model="barberForm.active" type="checkbox" class="h-5 w-5"> Ativo no site e nos agendamentos</label>
           <div class="mt-4 flex gap-2"><button type="submit" class="min-h-12 flex-1 border-2 border-[#09090B] bg-[#F59E0B] px-3 font-black" :disabled="busy">{{ busy ? "SALVANDO…" : editingBarberId ? "SALVAR" : "CADASTRAR" }}</button><button v-if="editingBarberId" type="button" class="min-h-12 border-2 border-[#09090B] px-3 font-black" @click="resetBarberForm">CANCELAR</button></div>
         </form>
         <div class="grid content-start gap-4">
           <article v-for="item in catalog.barbers" :key="item.id" class="grid gap-4 border-2 border-[#09090B] bg-white p-4 shadow-[4px_4px_0px_#09090B] sm:grid-cols-[100px_1fr]">
-            <img v-if="item.photoUrl" :src="item.photoUrl" :alt="`Retrato de ${item.name}`" class="h-24 w-24 border-2 border-[#09090B] object-cover">
+            <img v-if="item.photoUrl" :src="item.photoUrl" :alt="`Retrato de ${item.name}`" class="h-24 w-24 border-2 border-[#09090B] object-cover" loading="lazy" decoding="async">
             <div v-else class="grid h-24 w-24 place-items-center border-2 border-[#09090B] bg-[#F59E0B] text-3xl font-black">{{ item.name.slice(0, 1) }}</div>
             <div><h3 class="text-xl font-black">{{ item.name }} <span v-if="!item.active" class="text-sm">· INATIVO</span></h3><p class="font-bold">{{ item.specialty }}</p><p class="mt-1">{{ item.bio }}</p><div class="mt-3 flex gap-2"><button type="button" class="min-h-10 border-2 border-[#09090B] bg-[#F59E0B] px-3 font-black" @click="editBarber(item)">EDITAR</button><button type="button" class="min-h-10 border-2 border-[#09090B] bg-white px-3 font-black" @click="deleteResource('barbers', item.id)">REMOVER</button></div></div>
           </article>

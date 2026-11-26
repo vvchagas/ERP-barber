@@ -22,6 +22,6 @@ export default defineEventHandler(async (event) => {
     message: `O serviço ${service.name} foi removido do catálogo ativo.`,
     metadata: { resource: "service", id: service.id, action: "deleted" },
   });
-  await writeAccessLog(event, true, "admin_service_deleted", "magic-key");
+  await writeAccessLog(event, true, "admin_service_deleted", "admin-session");
   return { deleted: true, archived: appointments > 0 };
 });

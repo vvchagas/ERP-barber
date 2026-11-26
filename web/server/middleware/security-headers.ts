@@ -5,5 +5,7 @@ export default fromNodeMiddleware(
   helmet({
     contentSecurityPolicy: false,
     crossOriginEmbedderPolicy: false,
+    frameguard: { action: "sameorigin" },
+    referrerPolicy: { policy: "no-referrer" },
   }) as NodeMiddleware,
 );

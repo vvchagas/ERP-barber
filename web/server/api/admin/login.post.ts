@@ -16,7 +16,7 @@ const bodySchema = z.object({
 
 export default defineEventHandler(async (event) => {
   const ip = getRequestIP(event) || "unknown";
-  const rate = consumeRateLimit(`admin-login:${ip}`);
+  const rate = await consumeRateLimit(`admin-login:${ip}`);
   if (!rate.allowed) {
     await writeAccessLog(event, false, "rate_limit");
     setResponseHeader(event, "Retry-After", rate.retryAfterSeconds);
@@ -40,10 +40,11 @@ export default defineEventHandler(async (event) => {
 
   const username = process.env.ADMIN_USER;
   const password = process.env.ADMIN_PASSWORD;
-  const credentialsValid = parsed.data.username !== undefined
-    && parsed.data.password !== undefined
-    && secretMatches(parsed.data.username, username)
+  const usernameMatches = parsed.data.username !== undefined
+    && secretMatches(parsed.data.username, username);
+  const passwordMatches = parsed.data.password !== undefined
     && secretMatches(parsed.data.password, password);
+  const credentialsValid = usernameMatches && passwordMatches;
   const fallbackValid = parsed.data.magicKey !== undefined
     && magicKeyMatches(parsed.data.magicKey);
   if (!credentialsValid && !fallbackValid) {

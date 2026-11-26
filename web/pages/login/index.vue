@@ -5,11 +5,13 @@ const busy = ref(false);
 const message = ref("");
 const form = reactive({ name: "", email: "", phone: "", password: "" });
 const config = useRuntimeConfig();
+const smartLoader = useSmartLoader();
 const { refreshSession } = useCustomerAuth();
 const route = useRoute();
 const lgpdConsent = ref(false);
 
 async function submit(): Promise<void> {
+  const stopLoginLoader = smartLoader.beginLoginSubmit();
   busy.value = true;
   message.value = "";
   try {
@@ -35,6 +37,7 @@ async function submit(): Promise<void> {
   } catch (error: unknown) {
     message.value = error instanceof Error ? error.message : "Não foi possível concluir.";
   } finally {
+    stopLoginLoader();
     busy.value = false;
   }
 }
@@ -55,7 +58,7 @@ function explainSocialSetup(provider: string): void {
   <main class="min-h-screen bg-(--muted-bg) px-4 pb-10 pt-24">
     <section class="mx-auto grid min-h-[620px] w-full max-w-6xl overflow-hidden border-2 border-(--border) bg-(--surface-bg) shadow-[8px_8px_0px_#09090B] lg:grid-cols-2">
       <aside class="relative flex min-h-80 flex-col justify-between overflow-hidden bg-[#09090B] p-7 text-white lg:p-10">
-        <img src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=1200&q=85" alt="" class="absolute inset-0 h-full w-full object-cover opacity-45">
+        <img src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?auto=format&fit=crop&w=1200&q=85" alt="" class="absolute inset-0 h-full w-full object-cover opacity-45" decoding="async">
         <div class="relative">
           <img src="/logo-navalha-corte.svg" alt="NAVALHA & CORTE" class="h-14 w-auto">
           <p class="mt-8 inline-block border-2 border-[#09090B] bg-[#F59E0B] px-3 py-2 font-black text-[#09090B]">TRADIÇÃO EM CADA DETALHE</p>

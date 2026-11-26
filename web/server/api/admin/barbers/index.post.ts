@@ -16,6 +16,6 @@ export default defineEventHandler(async (event) => {
     message: `${barber.name} foi adicionado(a) à equipe.`,
     metadata: { resource: "barber", id: barber.id, action: "created" },
   });
-  await writeAccessLog(event, true, "admin_barber_created", "magic-key");
+  await writeAccessLog(event, true, "admin_barber_created", "admin-session");
   return barber;
 });

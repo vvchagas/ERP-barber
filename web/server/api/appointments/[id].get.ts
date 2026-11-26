@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
   const parsed = paramsSchema.safeParse({ id: getRouterParam(event, "id") });
   if (!parsed.success) throw createError({ statusCode: 400, statusMessage: "Identificador inválido" });
   const customerPhone = getCustomerSessionPhone(event);
-  const isAdmin = isAdminSessionValid(event);
+  const isAdmin = await isAdminSessionValid(event);
   if (!customerPhone && !isAdmin) throw createError({ statusCode: 401, statusMessage: "Entre na sua conta para ver este pagamento" });
 
   const appointment = await prisma.appointment.findUnique({

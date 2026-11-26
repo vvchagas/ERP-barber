@@ -3,7 +3,7 @@
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
-    <ScissorsLoader />
+    <SmartLoader />
     <OfflineAlertModal />
   </div>
 </template>

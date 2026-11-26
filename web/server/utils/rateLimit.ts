@@ -1,38 +1,49 @@
-type RateLimitEntry = {
-  attempts: number;
-  resetAt: number;
-};
+import { prisma } from "./prisma";
 
-const entries = new Map<string, RateLimitEntry>();
+let requestsSinceCleanup = 0;
 
-function cleanupExpiredEntries(now: number): void {
-  for (const [key, entry] of entries) {
-    if (entry.resetAt <= now) entries.delete(key);
-  }
-}
-
-export function consumeRateLimit(
+export async function consumeRateLimit(
   key: string,
   limit = 5,
   windowMs = 10 * 60 * 1000,
-): { allowed: boolean; retryAfterSeconds: number } {
-  const now = Date.now();
-  if (entries.size > 10000) cleanupExpiredEntries(now);
-  const entry = entries.get(key);
+): Promise<{ allowed: boolean; retryAfterSeconds: number }> {
+  const now = new Date();
+  const nextReset = new Date(now.getTime() + windowMs);
+  const rows = await prisma.$queryRaw<Array<{ attempts: number; resetAt: Date }>>`
+    INSERT INTO "RateLimitBucket" ("key", "attempts", "resetAt", "createdAt", "updatedAt")
+    VALUES (${key}, 1, ${nextReset}, ${now}, ${now})
+    ON CONFLICT ("key") DO UPDATE SET
+      "attempts" = CASE
+        WHEN "RateLimitBucket"."resetAt" <= ${now} THEN 1
+        ELSE "RateLimitBucket"."attempts" + 1
+      END,
+      "resetAt" = CASE
+        WHEN "RateLimitBucket"."resetAt" <= ${now} THEN ${nextReset}
+        ELSE "RateLimitBucket"."resetAt"
+      END,
+      "updatedAt" = ${now}
+    WHERE "RateLimitBucket"."resetAt" <= ${now}
+       OR "RateLimitBucket"."attempts" < ${limit}
+    RETURNING "attempts", "resetAt"
+  `;
 
-  if (!entry || entry.resetAt <= now) {
-    entries.set(key, { attempts: 1, resetAt: now + windowMs });
-    return { allowed: true, retryAfterSeconds: 0 };
+  requestsSinceCleanup += 1;
+  if (requestsSinceCleanup >= 100) {
+    requestsSinceCleanup = 0;
+    await prisma.$executeRaw`
+      DELETE FROM "RateLimitBucket"
+      WHERE "resetAt" <= ${new Date(now.getTime() - 24 * 60 * 60 * 1000)}
+    `;
   }
 
-  if (entry.attempts >= limit) {
-    return {
-      allowed: false,
-      retryAfterSeconds: Math.max(1, Math.ceil((entry.resetAt - now) / 1000)),
-    };
-  }
-
-  entry.attempts += 1;
-  entries.set(key, entry);
-  return { allowed: true, retryAfterSeconds: 0 };
+  if (rows.length) return { allowed: true, retryAfterSeconds: 0 };
+  const state = await prisma.$queryRaw<Array<{ resetAt: Date }>>`
+    SELECT "resetAt" FROM "RateLimitBucket" WHERE "key" = ${key}
+  `;
+  const resetAt = state[0]?.resetAt;
+  if (!resetAt) throw new Error("Rate-limit bucket disappeared during update");
+  return {
+    allowed: false,
+    retryAfterSeconds: Math.max(1, Math.ceil((resetAt.getTime() - now.getTime()) / 1000)),
+  };
 }

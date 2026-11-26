@@ -20,12 +20,12 @@ const bodySchema = z.object({
   cardAuthorization: z.string().optional(),
   gatewayProvider: z.string().max(50).optional(),
   gatewayTransactionId: z.string().max(191).optional(),
-}).refine((data) => data.appointmentId || data.serviceIds || data.planId || data.grossAmount, {
+}).strict().refine((data) => data.appointmentId || data.serviceIds || data.planId || data.grossAmount, {
   message: "Informe uma comanda, serviços ou plano",
 });
 
 export default defineEventHandler(async (event) => {
-  const isAdmin = isAdminSessionValid(event);
+  const isAdmin = await isAdminSessionValid(event);
   const customerPhone = getCustomerSessionPhone(event);
   if (!isAdmin && !customerPhone) {
     throw createError({ statusCode: 404, statusMessage: "Página não encontrada" });

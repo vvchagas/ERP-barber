@@ -25,6 +25,6 @@ export default defineEventHandler(async (event) => {
     message: `O serviço ${service.name} foi cadastrado.`,
     metadata: { resource: "service", id: service.id, action: "created" },
   });
-  await writeAccessLog(event, true, "admin_service_created", "magic-key");
+  await writeAccessLog(event, true, "admin_service_created", "admin-session");
   return service;
 });

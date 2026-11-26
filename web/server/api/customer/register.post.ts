@@ -7,15 +7,15 @@ import { createAdminNotification } from "../../utils/adminNotifications";
 
 const bodySchema = z.object({
   name: z.string().trim().min(2).max(100),
-  email: z.string().trim().email(),
+  email: z.string().trim().email().toLowerCase(),
   phone: z.string().trim().regex(/^[0-9()+ -]{10,20}$/),
   password: z.string().min(8).max(128),
   lgpdConsent: z.literal(true),
-}).strict();
+});
 
 export default defineEventHandler(async (event) => {
   const ip = getRequestIP(event) || "unknown";
-  const rate = consumeRateLimit(`customer-register:${ip}`);
+  const rate = await consumeRateLimit(`customer-register:${ip}`);
   if (!rate.allowed) {
     setResponseHeader(event, "Retry-After", rate.retryAfterSeconds);
     throw createError({ statusCode: 429, statusMessage: "Muitas tentativas" });
@@ -25,10 +25,6 @@ export default defineEventHandler(async (event) => {
   const existing = await prisma.customer.findUnique({ where: { phone: result.data.phone } });
   if (existing) throw createError({ statusCode: 409, statusMessage: "Já existe uma conta com este telefone" });
   const credentials = hashPassword(result.data.password);
-  const isOwner = Boolean(
-    process.env.OWNER_EMAIL
-    && result.data.email.trim().toLowerCase() === process.env.OWNER_EMAIL.trim().toLowerCase(),
-  );
   try {
     const customer = await prisma.$transaction(async (tx) => {
       const created = await tx.customer.create({
@@ -36,7 +32,7 @@ export default defineEventHandler(async (event) => {
           name: result.data.name,
           email: result.data.email,
           phone: result.data.phone,
-          role: isOwner ? "ADMIN" : "CUSTOMER",
+          role: "CUSTOMER",
           passwordHash: credentials.hash,
           passwordSalt: credentials.salt,
           lgpdConsent: true,

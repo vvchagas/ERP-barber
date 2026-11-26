@@ -16,7 +16,7 @@ export interface CustomerSubscriptionSummary {
 
 export interface CustomerProfile {
   id: string;
-  role: "CUSTOMER" | "BARBER" | "ADMIN";
+  role: string;
   name: string;
   phone: string;
   email: string | null;

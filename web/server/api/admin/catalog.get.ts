@@ -4,7 +4,7 @@ import { writeAccessLog } from "../../utils/accessLog";
 
 export default defineEventHandler(async (event) => {
   await requireAdminSession(event);
-  await writeAccessLog(event, true, "admin_catalog_access", "magic-key");
+  await writeAccessLog(event, true, "admin_catalog_access", "admin-session");
   const [barbers, services, plans, customers] = await Promise.all([
     prisma.barber.findMany({ orderBy: { createdAt: "asc" } }),
     prisma.service.findMany({ orderBy: { createdAt: "asc" } }),

@@ -27,6 +27,6 @@ export default defineEventHandler(async (event) => {
     message: `O plano ${plan.name} foi removido do catálogo ativo.`,
     metadata: { resource: "plan", id: plan.id, action: "deleted" },
   });
-  await writeAccessLog(event, true, "admin_plan_deleted", "magic-key");
+  await writeAccessLog(event, true, "admin_plan_deleted", "admin-session");
   return { deleted: true, archived };
 });

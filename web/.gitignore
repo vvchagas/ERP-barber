@@ -1,11 +1,10 @@
 .env
+.env.*
+!.env.example
 node_modules/
 .nuxt/
 .output/
 dist/
-
-node_modules/
-.nuxt/
-.output/
-.env
 generated/
+.data/
+*.zip

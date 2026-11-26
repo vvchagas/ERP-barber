@@ -112,7 +112,7 @@ onMounted(async () => {
 <template>
   <main class="min-h-screen bg-(--muted-bg) px-4 pb-12 pt-24">
     <div class="mx-auto max-w-5xl">
-      <section v-if="confirmed" class="mx-auto max-w-2xl border-2 border-[#09090B] bg-[#16A34A] p-8 text-center text-white shadow-[8px_8px_0px_#09090B]" role="status">
+      <section v-if="confirmed" class="mx-auto max-w-2xl border-2 border-[#09090B] bg-[#16A34A] p-8 text-center text-[#09090B] shadow-[8px_8px_0px_#09090B]" role="status">
         <p class="text-6xl" aria-hidden="true">✓</p>
         <h1 class="mt-4 text-4xl font-black">Pagamento confirmado!</h1>
         <p class="mt-3 text-lg font-bold">Seu comprovante foi validado. Agora você pode confirmar o atendimento com a equipe.</p>
@@ -128,7 +128,7 @@ onMounted(async () => {
             </header>
             <div class="p-5">
               <div v-if="appointment" class="flex items-center gap-4 border-b-2 border-dashed border-(--border) pb-5">
-                <img v-if="appointment.barber.photoUrl" :src="appointment.barber.photoUrl" :alt="`Retrato de ${appointment.barber.name}`" class="h-20 w-20 border-2 border-(--border) object-cover">
+                <img v-if="appointment.barber.photoUrl" :src="appointment.barber.photoUrl" :alt="`Retrato de ${appointment.barber.name}`" class="h-20 w-20 border-2 border-(--border) object-cover" loading="lazy" decoding="async">
                 <div>
                   <p class="font-black">Seu barbeiro</p>
                   <p class="text-xl font-black">{{ appointment.barber.name }}</p>
@@ -171,7 +171,7 @@ onMounted(async () => {
                 <span v-if="config.public.pixKey" class="break-all font-mono text-sm">{{ config.public.pixKey }}</span>
                 <span v-else class="font-bold">QR Code e código Copia e Cola serão fornecidos pelo gateway quando configurado.</span>
               </div>
-              <button v-if="config.public.pixKey" type="button" class="mt-3 min-h-12 w-full border-2 border-(--border) px-3 font-black" :class="copied ? 'bg-[#16A34A] text-white' : 'bg-(--surface-bg)'" @click="copyPixKey">{{ copied ? "Chave PIX copiada!" : "Copiar chave PIX" }}</button>
+              <button v-if="config.public.pixKey" type="button" class="mt-3 min-h-12 w-full border-2 border-(--border) px-3 font-black" :class="copied ? 'bg-[#16A34A] text-[#09090B]' : 'bg-(--surface-bg)'" @click="copyPixKey">{{ copied ? "Chave PIX copiada!" : "Copiar chave PIX" }}</button>
             </div>
             <p v-if="method !== 'PIX'" class="mt-4 border-2 border-(--border) p-3 text-sm font-bold">O SDK tokenizado de cartão não está configurado. Não informe número, validade ou CVV nesta página.</p>
             <p v-if="pending" class="mt-4 border-2 border-[#09090B] bg-[#F59E0B] p-3 font-black text-[#09090B]" role="status">Pagamento pendente de confirmação segura pelo provedor. O plano e o WhatsApp só serão liberados após confirmação.</p>

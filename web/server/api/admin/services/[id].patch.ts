@@ -33,6 +33,6 @@ export default defineEventHandler(async (event) => {
     message: `Os dados do serviço ${service.name} foram atualizados.`,
     metadata: { resource: "service", id: service.id, action: "updated" },
   });
-  await writeAccessLog(event, true, "admin_service_updated", "magic-key");
+  await writeAccessLog(event, true, "admin_service_updated", "admin-session");
   return service;
 });

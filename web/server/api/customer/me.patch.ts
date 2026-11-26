@@ -6,7 +6,7 @@ import { hashPassword, verifyPassword } from "../../utils/password";
 const bodySchema = z.object({
   name: z.string().trim().min(2).max(100).optional(),
   phone: z.string().trim().regex(/^[0-9()+ -]{10,20}$/).optional(),
-  email: z.string().trim().email().max(254).nullable().optional(),
+  email: z.string().trim().email().max(254).toLowerCase().nullable().optional(),
   avatarUrl: z.string().max(41000).nullable().optional(),
   silentCut: z.boolean().optional(),
   favoriteBarberId: z.string().min(1).max(191).nullable().optional(),
@@ -15,7 +15,7 @@ const bodySchema = z.object({
   theme: z.enum(["light", "dark", "high-contrast"]).optional(),
   currentPassword: z.string().max(128).optional(),
   newPassword: z.string().min(8).max(128).optional(),
-});
+}).strict();
 
 export default defineEventHandler(async (event) => {
   const phone = getCustomerSessionPhone(event);

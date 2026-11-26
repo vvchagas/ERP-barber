@@ -6,6 +6,10 @@ web/.nuxt/
 web/.output/
 .env
 web/.env
+.env.*
+web/.env.*
+!.env.example
+!web/.env.example
 generated/
 web/generated/
 .data/

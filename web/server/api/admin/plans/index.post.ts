@@ -26,6 +26,6 @@ export default defineEventHandler(async (event) => {
     message: `O plano ${plan.name} foi cadastrado.`,
     metadata: { resource: "plan", id: plan.id, action: "created" },
   });
-  await writeAccessLog(event, true, "admin_plan_created", "magic-key");
+  await writeAccessLog(event, true, "admin_plan_created", "admin-session");
   return plan;
 });

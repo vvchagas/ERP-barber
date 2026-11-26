@@ -2,8 +2,8 @@
 interface Service { id: string; name: string; description: string; durationMin: number; price: number; promoPrice: number | null; promoLabel: string | null }
 interface Barber { id: string; name: string; specialty?: string; photoUrl?: string | null }
 
-const { data: services } = await useFetch<Service[]>("/api/services");
-const { data: barbers } = await useFetch<Barber[]>("/api/barbers");
+const { data: services, pending: servicesPending } = await useFetch<Service[]>("/api/services");
+const { data: barbers, pending: barbersPending } = await useFetch<Barber[]>("/api/barbers");
 const step = ref(1);
 const selectedServiceIds = ref<string[]>([]);
 const selectedBarberId = ref("");
@@ -11,15 +11,14 @@ const selectedDate = ref("");
 const selectedTime = ref("");
 const noConversation = ref(false);
 const observations = ref("");
-const customerName = ref("");
-const customerPhone = ref("");
-const customerEmail = ref("");
 const lgpdConsent = ref(false);
 const paymentTiming = ref<"PRESENCIAL_BALCAO" | "LIQUIDADO_AGORA" | "PLANO">("PRESENCIAL_BALCAO");
 const slots = ref<string[]>([]);
 const busy = ref(false);
 const errorMessage = ref("");
 const { customer, refreshSession } = useCustomerAuth();
+const { reveal } = useScrollReveal();
+const slotsPending = ref(false);
 const todayParts = new Intl.DateTimeFormat("en-US", {
   timeZone: "America/Sao_Paulo",
   year: "numeric",
@@ -90,7 +89,12 @@ function selectDate(date: Date): void {
 async function loadSlots(): Promise<void> {
   selectedTime.value = "";
   if (!selectedBarberId.value || !selectedDate.value) return;
-  slots.value = await $fetch<string[]>("/api/appointments/availability", { query: { barberId: selectedBarberId.value, date: selectedDate.value, duration: duration.value || 30 } });
+  slotsPending.value = true;
+  try {
+    slots.value = await $fetch<string[]>("/api/appointments/availability", { query: { barberId: selectedBarberId.value, date: selectedDate.value, duration: duration.value || 30 } });
+  } finally {
+    slotsPending.value = false;
+  }
 }
 
 function changeMonth(amount: number): void {
@@ -102,12 +106,12 @@ function changeMonth(amount: number): void {
 
 async function finish(): Promise<void> {
   errorMessage.value = "";
-  if (!lgpdConsent.value) {
-    errorMessage.value = "Confirme a autorização LGPD para continuar.";
+  if (!customer.value) {
+    errorMessage.value = "Entre ou crie uma conta para confirmar o agendamento.";
     return;
   }
-  if (!customerName.value.trim() || !customerPhone.value.trim()) {
-    errorMessage.value = "Informe nome e telefone.";
+  if (!lgpdConsent.value) {
+    errorMessage.value = "Confirme a autorização LGPD para continuar.";
     return;
   }
   busy.value = true;
@@ -115,9 +119,6 @@ async function finish(): Promise<void> {
     const appointment = await $fetch<{ id: string; scheduledAt: string }>("/api/appointments", {
       method: "POST",
       body: {
-        customerName: customerName.value,
-        customerPhone: customerPhone.value,
-        customerEmail: customerEmail.value || undefined,
         barberId: selectedBarberId.value,
         scheduledAt: selectedTime.value,
         serviceIds: selectedServiceIds.value,
@@ -152,9 +153,6 @@ async function finish(): Promise<void> {
 onMounted(async () => {
   await refreshSession();
   if (!customer.value) return;
-  customerName.value = customer.value.name;
-  customerPhone.value = customer.value.phone;
-  customerEmail.value = customer.value.email ?? "";
   noConversation.value = customer.value.silentCut;
   if (customer.value.favoriteBarberId) selectedBarberId.value = customer.value.favoriteBarberId;
 });
@@ -163,16 +161,17 @@ onMounted(async () => {
 <template>
   <main class="min-h-screen bg-(--muted-bg) px-4 pb-12 pt-24">
     <div class="mx-auto max-w-6xl">
-      <aside v-if="availableCredits > 0" class="mb-5 border-2 border-[#09090B] bg-[#16A34A] p-4 font-black text-white shadow-[4px_4px_0px_#09090B]" role="status">
+      <aside v-if="availableCredits > 0" class="mb-5 border-2 border-[#09090B] bg-[#16A34A] p-4 font-black text-[#09090B] shadow-[4px_4px_0px_#09090B]" role="status">
         Você possui {{ availableCredits }} créditos ativos no seu Plano{{ nearestExpiry ? ` — válidos até ${new Date(nearestExpiry).toLocaleDateString("pt-BR")}` : "" }}.
       </aside>
       <div class="grid grid-cols-3 border-2 border-(--border) bg-(--surface-bg)">
         <p v-for="number in 3" :key="number" class="min-h-12 py-3 text-center font-black" :class="step >= number ? 'bg-[#F59E0B] text-[#09090B]' : ''">{{ number }}</p>
       </div>
-      <section v-if="step === 1" class="mt-6 border-2 border-(--border) bg-(--surface-bg) p-5 shadow-[8px_8px_0px_#09090B]">
+      <section v-if="step === 1" :ref="reveal" class="mt-6 border-2 border-(--border) bg-(--surface-bg) p-5 shadow-[8px_8px_0px_#09090B]">
         <h1 class="text-3xl font-black">1. Escolha o serviço</h1>
         <div class="mt-5 grid gap-4 md:grid-cols-2">
-          <label v-for="service in services" :key="service.id" class="relative flex min-h-32 cursor-pointer gap-3 border-2 border-(--border) p-4" :class="selectedServiceIds.includes(service.id) ? 'bg-[#F59E0B] text-[#09090B]' : 'bg-(--surface-bg)'">
+          <BrutalSkeleton v-if="servicesPending" variant="card" :count="4" class="md:col-span-2" />
+          <label v-for="service in services" :key="service.id" :ref="reveal" class="relative flex min-h-32 cursor-pointer gap-3 border-2 border-(--border) p-4" :class="selectedServiceIds.includes(service.id) ? 'bg-[#F59E0B] text-[#09090B]' : 'bg-(--surface-bg)'">
             <input v-model="selectedServiceIds" type="checkbox" :value="service.id" class="mt-1 h-6 w-6">
             <span class="pr-16"><strong class="block text-xl">{{ service.name }}</strong><span class="block">{{ service.description }}</span><span class="mt-2 flex flex-wrap items-baseline gap-2 font-black"><span v-if="effectivePrice(service) < service.price" class="font-bold line-through opacity-60">{{ formatPrice(service.price) }}</span><span>{{ formatPrice(effectivePrice(service)) }}</span><span>· {{ service.durationMin }} min</span></span></span>
             <span v-if="effectivePrice(service) < service.price" class="absolute right-2 top-2 border-2 border-[#09090B] bg-[#DC2626] px-2 py-1 text-xs font-black uppercase tracking-wider text-white">{{ service.promoLabel || "PROMOÇÃO" }}</span>
@@ -180,13 +179,14 @@ onMounted(async () => {
         </div>
         <button type="button" class="mt-6 min-h-14 w-full border-2 border-[#09090B] bg-[#F59E0B] px-6 font-black text-[#09090B] shadow-[4px_4px_0px_#09090B]" :disabled="!selectedServiceIds.length" @click="step = 2">Continuar</button>
       </section>
-      <section v-else-if="step === 2" class="mt-6 border-2 border-(--border) bg-(--surface-bg) p-5 shadow-[8px_8px_0px_#09090B]">
+      <section v-else-if="step === 2" :ref="reveal" class="mt-6 border-2 border-(--border) bg-(--surface-bg) p-5 shadow-[8px_8px_0px_#09090B]">
         <h1 class="text-3xl font-black">2. Data e profissional</h1>
         <fieldset class="mt-5">
           <legend class="font-black">Escolha o barbeiro</legend>
           <div class="mt-3 grid gap-3 sm:grid-cols-2">
-            <button v-for="barber in barbers" :key="barber.id" type="button" class="flex min-h-24 items-center gap-3 border-2 border-(--border) p-3 text-left" :class="selectedBarberId === barber.id ? 'bg-[#F59E0B] text-[#09090B]' : 'bg-(--surface-bg)'" @click="selectedBarberId = barber.id; loadSlots()">
-              <img v-if="barber.photoUrl" :src="barber.photoUrl" :alt="`Retrato de ${barber.name}`" class="h-16 w-16 border-2 border-(--border) object-cover">
+            <BrutalSkeleton v-if="barbersPending" variant="list-item" :count="4" class="sm:col-span-2" />
+            <button v-for="barber in barbers" :key="barber.id" :ref="reveal" type="button" class="flex min-h-24 items-center gap-3 border-2 border-(--border) p-3 text-left" :class="selectedBarberId === barber.id ? 'bg-[#F59E0B] text-[#09090B]' : 'bg-(--surface-bg)'" @click="selectedBarberId = barber.id; loadSlots()">
+              <img v-if="barber.photoUrl" :src="barber.photoUrl" :alt="`Retrato de ${barber.name}`" class="h-16 w-16 border-2 border-(--border) object-cover" loading="lazy" decoding="async">
               <span v-else class="grid h-16 w-16 place-items-center border-2 border-(--border) bg-(--muted-bg) font-black">{{ barber.name.slice(0, 2).toUpperCase() }}</span>
               <span><strong class="block">{{ barber.name }}</strong><span class="block text-sm">{{ barber.specialty }}</span></span>
             </button>
@@ -207,18 +207,23 @@ onMounted(async () => {
         <fieldset class="mt-6">
           <legend class="font-black">Horários livres — 08h às 19h</legend>
           <div class="mt-2 grid grid-cols-3 gap-3 sm:grid-cols-6">
+            <BrutalSkeleton v-if="slotsPending" variant="slot-grid" :count="12" class="col-span-3 sm:col-span-6" />
             <button v-for="slot in slots" :key="slot" type="button" class="min-h-12 border-2 border-(--border) font-black" :class="selectedTime === slot ? 'bg-[#F59E0B] text-[#09090B]' : 'bg-(--surface-bg)'" @click="selectedTime = slot">{{ new Date(slot).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" }) }}</button>
           </div>
           <p v-if="selectedBarberId && selectedDate && !slots.length" class="mt-3 border-2 border-(--border) bg-(--muted-bg) p-3 font-bold">Nenhum horário disponível nesta data.</p>
         </fieldset>
         <div class="mt-6 flex gap-3"><button type="button" class="min-h-14 flex-1 border-2 border-(--border) bg-(--surface-bg) px-4 font-black" @click="step = 1">Voltar</button><button type="button" class="min-h-14 flex-1 border-2 border-[#09090B] bg-[#F59E0B] px-4 font-black" :disabled="!selectedTime" @click="step = 3">Continuar</button></div>
       </section>
-      <section v-else class="mt-6 border-2 border-(--border) bg-(--surface-bg) p-5 shadow-[8px_8px_0px_#09090B]">
+      <section v-else :ref="reveal" class="mt-6 border-2 border-(--border) bg-(--surface-bg) p-5 shadow-[8px_8px_0px_#09090B]">
         <h1 class="text-3xl font-black">3. Confirmar agendamento</h1>
-        <div class="mt-5 grid gap-5 md:grid-cols-2">
-          <label class="font-bold">Seu nome<input v-model="customerName" type="text" autocomplete="name" class="mt-2 min-h-14 w-full border-2 border-(--border) px-3"></label>
-          <label class="font-bold">Telefone<input v-model="customerPhone" type="tel" autocomplete="tel" class="mt-2 min-h-14 w-full border-2 border-(--border) px-3"></label>
-          <label class="font-bold md:col-span-2">E-mail opcional<input v-model="customerEmail" type="email" autocomplete="email" class="mt-2 min-h-14 w-full border-2 border-(--border) px-3"></label>
+        <div v-if="customer" class="mt-5 grid gap-5 border-2 border-(--border) bg-(--muted-bg) p-4 md:grid-cols-2">
+          <p><strong>Cliente:</strong> {{ customer.name }}</p>
+          <p><strong>Telefone:</strong> {{ customer.phone }}</p>
+          <p v-if="customer.email" class="md:col-span-2"><strong>E-mail:</strong> {{ customer.email }}</p>
+        </div>
+        <div v-else class="mt-5 border-2 border-(--border) bg-(--muted-bg) p-4 font-bold">
+          <p>Entre na sua conta ou crie uma conta para confirmar este agendamento.</p>
+          <NuxtLink to="/login?redirect=/agendamento" class="mt-3 inline-flex min-h-12 items-center border-2 border-[#09090B] bg-[#F59E0B] px-4 font-black text-[#09090B]">Entrar ou criar conta</NuxtLink>
         </div>
         <div class="mt-5 border-2 border-(--border) bg-(--muted-bg) p-4">
           <p><strong>Data:</strong> {{ new Date(selectedTime).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) }}</p>
@@ -233,7 +238,7 @@ onMounted(async () => {
           <label v-if="availableCredits > 0" class="min-h-14 border-2 border-(--border) p-3" :class="paymentTiming === 'PLANO' ? 'bg-[#F59E0B] text-[#09090B]' : ''"><input v-model="paymentTiming" type="radio" value="PLANO" class="mr-2"> Usar crédito do plano</label>
         </div></fieldset>
         <label class="mt-5 flex min-h-14 items-start gap-3 border-2 border-(--border) p-3 font-bold"><input v-model="lgpdConsent" type="checkbox" required class="mt-1 h-6 w-6"><span>Autorizo o tratamento dos meus dados para agendamento e lembretes, conforme a <NuxtLink to="/privacidade" class="underline">Política de Privacidade</NuxtLink>.</span></label>
-        <p v-if="errorMessage" role="alert" class="mt-4 border-2 border-(--border) bg-[#EA580C] p-3 font-black text-white">{{ errorMessage }}</p>
+        <p v-if="errorMessage" role="alert" class="mt-4 border-2 border-(--border) bg-[#EA580C] p-3 font-black text-[#09090B]">{{ errorMessage }}</p>
         <div class="mt-6 flex gap-3"><button type="button" class="min-h-14 flex-1 border-2 border-(--border) bg-(--surface-bg) px-4 font-black" @click="step = 2">Voltar</button><button type="button" class="min-h-14 flex-1 border-2 border-[#09090B] bg-[#F59E0B] px-4 font-black" :disabled="busy" @click="finish">{{ busy ? "Salvando..." : "Confirmar agendamento" }}</button></div>
       </section>
     </div>

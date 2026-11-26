@@ -4,6 +4,7 @@ const route = useRoute();
 const menuOpen = ref(false);
 const theme = ref<Theme>("light");
 const { customer, refresh, logout } = useCustomerAuth();
+const isAdmin = computed(() => customer.value?.role === "ADMIN");
 const firstName = computed(() => customer.value?.name.split(/\s+/)[0] ?? "");
 const hasVip = computed(() => (customer.value?.subscriptions.length ?? 0) > 0);
 const initials = computed(() => customer.value?.name
@@ -70,7 +71,10 @@ onBeforeUnmount(() => { document.body.style.overflow = ""; });
           <img v-if="customer.avatarUrl" :src="customer.avatarUrl" alt="" class="h-9 w-9 border-2 border-(--border) object-cover">
           <span v-else class="grid h-9 w-9 place-items-center border-2 border-(--border) bg-[#F59E0B] text-[#09090B]">{{ initials }}</span>
           <span>{{ firstName }}</span>
-          <span v-if="hasVip" class="border-2 border-[#09090B] bg-[#16A34A] px-2 py-1 text-xs text-white">VIP</span>
+          <span v-if="hasVip" class="border-2 border-[#09090B] bg-[#16A34A] px-2 py-1 text-xs text-[#09090B]">VIP</span>
+        </NuxtLink>
+        <NuxtLink v-if="isAdmin" to="/admin" class="hidden min-h-12 items-center border-2 border-[#09090B] bg-[#F59E0B] px-4 font-black text-[#09090B] shadow-[4px_4px_0px_#09090B] sm:flex">
+          PAINEL ADMIN
         </NuxtLink>
         <button v-if="customer" type="button" class="hidden min-h-12 border-2 border-(--border) bg-(--surface-bg) px-3 font-black sm:block" @click="signOut">Sair</button>
         <NuxtLink v-else to="/login" class="hidden min-h-12 items-center border-2 border-(--border) bg-(--surface-bg) px-4 font-black sm:flex">Entrar / Criar Conta</NuxtLink>
@@ -90,7 +94,10 @@ onBeforeUnmount(() => { document.body.style.overflow = ""; });
         <NuxtLink v-if="customer" to="/configuracoes" class="flex min-h-14 items-center gap-3 border-2 border-(--border) bg-(--surface-bg) px-4 font-black" @click="menuOpen = false">
           <span class="grid h-10 w-10 place-items-center border-2 border-(--border) bg-[#F59E0B] text-[#09090B]">{{ initials }}</span>
           {{ firstName }}
-          <span v-if="hasVip" class="ml-auto border-2 border-[#09090B] bg-[#16A34A] px-2 py-1 text-xs text-white">VIP</span>
+          <span v-if="hasVip" class="ml-auto border-2 border-[#09090B] bg-[#16A34A] px-2 py-1 text-xs text-[#09090B]">VIP</span>
+        </NuxtLink>
+        <NuxtLink v-if="isAdmin" to="/admin" class="flex min-h-14 items-center border-2 border-[#09090B] bg-[#F59E0B] px-4 font-black text-[#09090B] shadow-[4px_4px_0px_#09090B]" @click="menuOpen = false">
+          PAINEL ADMIN
         </NuxtLink>
         <button v-if="customer" type="button" class="min-h-14 border-2 border-(--border) bg-(--surface-bg) px-4 font-black" @click="signOut">Sair</button>
         <NuxtLink v-else to="/login" class="flex min-h-14 items-center border-2 border-(--border) bg-(--surface-bg) px-4 font-black" @click="menuOpen = false">Entrar / Criar Conta</NuxtLink>

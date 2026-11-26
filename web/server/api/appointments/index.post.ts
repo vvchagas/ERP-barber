@@ -1,12 +1,9 @@
 import { z } from "zod";
 import { prisma } from "../../utils/prisma";
-import { createCustomerSession } from "../../utils/adminSession";
+import { getCustomerSessionPhone } from "../../utils/adminSession";
 import { createAdminNotification } from "../../utils/adminNotifications";
 
 const bodySchema = z.object({
-  customerName: z.string().trim().min(2).max(100),
-  customerPhone: z.string().trim().regex(/^[0-9()+ -]{10,20}$/),
-  customerEmail: z.string().email().optional(),
   barberId: z.string().min(1).max(191),
   scheduledAt: z.string().datetime({ offset: true }),
   serviceIds: z.array(z.string().min(1).max(191)).min(1).max(10),
@@ -15,9 +12,13 @@ const bodySchema = z.object({
   paymentTiming: z.enum(["PRESENCIAL_BALCAO", "LIQUIDADO_AGORA"]).default("PRESENCIAL_BALCAO"),
   lgpdConsent: z.literal(true),
   usePlanCredit: z.boolean().default(false),
-});
+}).strict();
 
 export default defineEventHandler(async (event) => {
+  const customerPhone = getCustomerSessionPhone(event);
+  if (!customerPhone) {
+    throw createError({ statusCode: 401, statusMessage: "Entre na sua conta para agendar" });
+  }
   const result = bodySchema.safeParse(await readBody(event));
   if (!result.success) {
     throw createError({ statusCode: 400, statusMessage: "Dados do agendamento inválidos" });
@@ -27,7 +28,7 @@ export default defineEventHandler(async (event) => {
   return prisma.$transaction(async (tx) => {
     const barber = await tx.barber.findFirst({
       where: { id: data.barberId, active: true },
-      select: { id: true },
+      select: { id: true, name: true },
     });
     if (!barber) {
       throw createError({ statusCode: 404, statusMessage: "Barbeiro não disponível" });
@@ -88,21 +89,13 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 409, statusMessage: "Este horário acabou de ser ocupado" });
     }
 
-    const existingCustomer = await tx.customer.findUnique({
-      where: { phone: data.customerPhone },
-      select: { id: true },
+    const customer = await tx.customer.findUnique({
+      where: { phone: customerPhone },
+      select: { id: true, name: true, anonymizedAt: true },
     });
-    const customer = await tx.customer.upsert({
-      where: { phone: data.customerPhone },
-      update: { name: data.customerName, email: data.customerEmail, lgpdConsentAt: new Date(), notes: data.notes },
-      create: {
-        name: data.customerName,
-        phone: data.customerPhone,
-        email: data.customerEmail,
-        lgpdConsentAt: new Date(),
-        notes: data.notes,
-      },
-    });
+    if (!customer || customer.anonymizedAt) {
+      throw createError({ statusCode: 401, statusMessage: "Sessão do cliente inválida" });
+    }
 
     if (data.usePlanCredit) {
       const subscription = await tx.customerSubscription.findFirst({
@@ -143,30 +136,14 @@ export default defineEventHandler(async (event) => {
           })),
         },
       },
-      include: { customer: true, barber: true, services: { include: { service: true } } },
+      include: { barber: { select: { name: true } } },
     });
-    if (!existingCustomer) {
-      await createAdminNotification({
-        type: "CUSTOMER_NEW",
-        title: "Novo cadastro de cliente",
-        message: `${customer.name} realizou o primeiro agendamento.`,
-        metadata: { customerId: customer.id },
-      }, tx);
-    }
     await createAdminNotification({
       type: "APPOINTMENT_NEW",
       title: "Novo agendamento",
       message: `${customer.name} agendou com ${appointment.barber.name}.`,
       metadata: { appointmentId: appointment.id, customerId: customer.id },
     }, tx);
-    createCustomerSession(event, customer.phone);
-
-    return {
-      ...appointment,
-      services: appointment.services.map((item) => ({
-        ...item,
-        unitPrice: Number(item.unitPrice),
-      })),
-    };
+    return { id: appointment.id, scheduledAt: appointment.scheduledAt };
   });
 });
