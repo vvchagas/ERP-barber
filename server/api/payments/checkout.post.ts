@@ -5,6 +5,7 @@ import {
   isAdminSessionValid,
 } from "../../utils/adminSession";
 import { writeAccessLog } from "../../utils/accessLog";
+import { createAdminNotification } from "../../utils/adminNotifications";
 
 const bodySchema = z.object({
   appointmentId: z.string().min(1).max(191).optional(),
@@ -19,7 +20,7 @@ const bodySchema = z.object({
   cardAuthorization: z.string().optional(),
   gatewayProvider: z.string().max(50).optional(),
   gatewayTransactionId: z.string().max(191).optional(),
-}).refine((data) => data.appointmentId || data.serviceIds || data.planId, {
+}).refine((data) => data.appointmentId || data.serviceIds || data.planId || data.grossAmount, {
   message: "Informe uma comanda, serviços ou plano",
 });
 
@@ -73,14 +74,16 @@ export default defineEventHandler(async (event) => {
       const serviceIds = [...new Set(appointment.services.map((item) => item.serviceId))];
       const services = await tx.service.findMany({
         where: { id: { in: serviceIds }, active: true },
-        select: { id: true, price: true },
+        select: { id: true, price: true, promoPrice: true },
       });
       if (services.length !== serviceIds.length) {
         throw createError({ statusCode: 409, statusMessage: "Um serviço desta comanda não está disponível" });
       }
       const grossCents = appointment.services.reduce((sum, item) => {
         const service = services.find((candidate) => candidate.id === item.serviceId);
-        const priceCents = Math.round(Number(service?.price ?? 0) * 100);
+        const originalCents = Math.round(Number(service?.price ?? 0) * 100);
+        const promoCents = service?.promoPrice == null ? null : Math.round(Number(service.promoPrice) * 100);
+        const priceCents = promoCents !== null && promoCents < originalCents ? promoCents : originalCents;
         return sum + priceCents * item.quantity;
       }, 0);
       gross = grossCents / 100;
@@ -88,24 +91,30 @@ export default defineEventHandler(async (event) => {
     } else if (data.serviceIds) {
       const services = await tx.service.findMany({
         where: { id: { in: [...new Set(data.serviceIds)] }, active: true },
-        select: { id: true, price: true },
+        select: { id: true, price: true, promoPrice: true },
       });
       if (services.length !== new Set(data.serviceIds).size) {
         throw createError({ statusCode: 400, statusMessage: "Um ou mais serviços não estão disponíveis" });
       }
-      gross = services.reduce((sum, service) => sum + Number(service.price), 0);
+      gross = services.reduce((sum, service) => {
+        const originalCents = Math.round(Number(service.price) * 100);
+        const promoCents = service.promoPrice === null ? null : Math.round(Number(service.promoPrice) * 100);
+        return sum + (promoCents !== null && promoCents < originalCents ? promoCents : originalCents);
+      }, 0) / 100;
     } else if (data.planId) {
       if (!customerPhone) {
         throw createError({ statusCode: 403, statusMessage: "Plano requer uma sessão válida do cliente" });
       }
       const plan = await tx.subscriptionPlan.findFirst({
         where: { id: data.planId, active: true },
-        select: { id: true, price: true, cutCredits: true, beardCredits: true },
+        select: { id: true, price: true, promoPrice: true, cutCredits: true, beardCredits: true },
       });
       if (!plan) {
         throw createError({ statusCode: 404, statusMessage: "Plano não encontrado" });
       }
-      gross = Number(plan.price);
+      const originalCents = Math.round(Number(plan.price) * 100);
+      const promoCents = plan.promoPrice === null ? null : Math.round(Number(plan.promoPrice) * 100);
+      gross = (promoCents !== null && promoCents < originalCents ? promoCents : originalCents) / 100;
       const customer = await tx.customer.findUnique({ where: { phone: customerPhone } });
       if (!customer) {
         throw createError({ statusCode: 404, statusMessage: "Cliente não encontrado" });
@@ -123,6 +132,8 @@ export default defineEventHandler(async (event) => {
       }
       purchasePlanId = plan.id;
       subscriptionPlan = { ...plan, customerId: customer.id };
+    } else if (isAdmin && data.grossAmount) {
+      gross = Math.round(data.grossAmount * 100) / 100;
     } else {
       throw createError({ statusCode: 400, statusMessage: "Informe uma comanda, serviços ou plano" });
     }
@@ -187,18 +198,26 @@ export default defineEventHandler(async (event) => {
         where: { id: subscriptionPlan.customerId },
         data: { subscriptionId: subscriptionPlan.id },
       });
+      await createAdminNotification({
+        type: "VIP_SUBSCRIBED",
+        title: "Nova assinatura VIP",
+        message: `Um cliente assinou o plano ${subscriptionPlan.id}.`,
+        metadata: { customerId: subscriptionPlan.customerId, planId: subscriptionPlan.id },
+      }, tx);
     }
 
     if (data.appointmentId && payment.status === "CONFIRMADO") {
       const appointment = await tx.appointment.findUnique({
         where: { id: data.appointmentId },
-        include: { barber: true, services: true },
+        include: { barber: true, customer: true, services: true },
       });
       if (appointment) {
-        await tx.appointment.update({
-          where: { id: appointment.id },
-          data: { status: "CONCLUIDO" },
-        });
+        if (appointment.status !== "CONCLUIDO") {
+          await tx.appointment.update({
+            where: { id: appointment.id },
+            data: { status: "CONCLUIDO" },
+          });
+        }
 
         const existingCommission = await tx.commissionRecord.findUnique({
           where: {
@@ -220,7 +239,23 @@ export default defineEventHandler(async (event) => {
             },
           });
         }
+        if (appointment.status !== "CONCLUIDO") {
+          await createAdminNotification({
+            type: "APPOINTMENT_COMPLETED",
+            title: "Atendimento concluído",
+            message: `O atendimento de ${appointment.customer.name} foi concluído após pagamento.`,
+            metadata: { appointmentId: appointment.id, customerId: appointment.customerId },
+          }, tx);
+        }
       }
+    }
+    if (payment.status === "CONFIRMADO") {
+      await createAdminNotification({
+        type: "PAYMENT_CONFIRMED",
+        title: "Pagamento confirmado",
+        message: `Pagamento de R$ ${gross.toFixed(2)} confirmado via ${data.method}.`,
+        metadata: { paymentId: payment.id, appointmentId: data.appointmentId, planId: purchasePlanId },
+      }, tx);
     }
 
     return {

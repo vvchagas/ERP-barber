@@ -2,24 +2,18 @@ import "dotenv/config";
 import { PrismaClient } from "../generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import pg from "pg";
-import { hashPassword } from "../server/utils/password";
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
 
 async function main(): Promise<void> {
-  const username = process.env.ADMIN_USER;
-  const password = process.env.ADMIN_PASSWORD;
-  if (!username || !password) {
-    throw new Error("ADMIN_USER and ADMIN_PASSWORD are required");
+  const ownerEmail = process.env.OWNER_EMAIL?.trim().toLowerCase();
+  if (ownerEmail) {
+    await prisma.customer.updateMany({
+      where: { email: { equals: ownerEmail, mode: "insensitive" } },
+      data: { role: "ADMIN" },
+    });
   }
-
-  const { salt, hash } = hashPassword(password);
-  await prisma.adminUser.upsert({
-    where: { username },
-    update: {},
-    create: { username, passwordSalt: salt, passwordHash: hash },
-  });
 
   await Promise.all([
     prisma.barber.upsert({
@@ -60,25 +54,67 @@ async function main(): Promise<void> {
         commissionRate: 0.30,
       },
     }),
+    prisma.barber.upsert({
+      where: { id: "barber-mateus" },
+      update: {
+        name: "Mateus",
+        specialty: "Cortes infantis e atendimento familiar",
+        bio: "Atendimento paciente e acolhedor para crianças e famílias.",
+        photoUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=500&q=85",
+        commissionRate: 0.30,
+        active: true,
+      },
+      create: {
+        id: "barber-mateus",
+        name: "Mateus",
+        specialty: "Cortes infantis e atendimento familiar",
+        bio: "Atendimento paciente e acolhedor para crianças e famílias.",
+        photoUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=500&q=85",
+        commissionRate: 0.30,
+      },
+    }),
+    prisma.barber.upsert({
+      where: { id: "barber-andre" },
+      update: {
+        name: "André",
+        specialty: "Barba tradicional e toalha quente",
+        bio: "Especialista em barba clássica, navalha e ritual de toalha quente.",
+        photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=500&q=85",
+        commissionRate: 0.30,
+        active: true,
+      },
+      create: {
+        id: "barber-andre",
+        name: "André",
+        specialty: "Barba tradicional e toalha quente",
+        bio: "Especialista em barba clássica, navalha e ritual de toalha quente.",
+        photoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=500&q=85",
+        commissionRate: 0.30,
+      },
+    }),
   ]);
 
   const services = [
-    ["Corte masculino", "Corte completo com acabamento", 40, 45],
-    ["Barba", "Barba alinhada e acabamento", 30, 35],
-    ["Combo corte + barba", "Corte e barba com acabamento", 70, 70],
-    ["Platinado", "Descoloração integral do cabelo", 180, 180],
+    ["service-corte-masculino", "Corte masculino", "Corte completo com acabamento", 40, 35, 30, "PROMOÇÃO"],
+    ["service-barba", "Barba", "Barba alinhada e acabamento", 30, 35, null, null],
+    ["service-combo-corte-mais-barba", "Combo corte + barba", "Corte e barba com acabamento", 70, 70, null, null],
+    ["service-platinado", "Platinado", "Descoloração integral do cabelo", 180, 180, null, null],
+    ["service-corte-infantil", "Corte infantil", "Corte com atendimento acolhedor para crianças", 35, 30, null, null],
+    ["service-sobrancelha-toalha-quente", "Sobrancelha e toalha quente", "Acabamento de sobrancelha com toalha quente", 25, 30, null, null],
   ] as const;
 
-  for (const [name, description, durationMin, price] of services) {
+  for (const [id, name, description, durationMin, price, promoPrice, promoLabel] of services) {
     await prisma.service.upsert({
-      where: { id: `service-${name.toLowerCase().replaceAll(" ", "-").replaceAll("+", "mais")}` },
-      update: { name, description, durationMin, price, active: true },
+      where: { id },
+      update: { name, description, durationMin, price, promoPrice, promoLabel, active: true },
       create: {
-        id: `service-${name.toLowerCase().replaceAll(" ", "-").replaceAll("+", "mais")}`,
+        id,
         name,
         description,
         durationMin,
         price,
+        promoPrice,
+        promoLabel,
       },
     });
   }
@@ -92,8 +128,26 @@ async function main(): Promise<void> {
   for (const [id, name, description, price, cutCredits, beardCredits] of plans) {
     await prisma.subscriptionPlan.upsert({
       where: { id },
-      update: { name, description, price, servicesPerMonth: cutCredits + beardCredits, cutCredits, beardCredits, active: true },
-      create: { id, name, description, price, servicesPerMonth: cutCredits + beardCredits, cutCredits, beardCredits },
+      update: {
+        name,
+        description,
+        price,
+        servicesPerMonth: cutCredits + beardCredits,
+        cutCredits,
+        beardCredits,
+        rules: "Créditos válidos por 30 dias. Atendimento de segunda a sábado, das 08h às 19h. Cancelamento com pelo menos 2 horas de antecedência.",
+        active: true,
+      },
+      create: {
+        id,
+        name,
+        description,
+        price,
+        servicesPerMonth: cutCredits + beardCredits,
+        cutCredits,
+        beardCredits,
+        rules: "Créditos válidos por 30 dias. Atendimento de segunda a sábado, das 08h às 19h. Cancelamento com pelo menos 2 horas de antecedência.",
+      },
     });
   }
 }

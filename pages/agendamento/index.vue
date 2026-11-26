@@ -1,5 +1,5 @@
 <script setup lang="ts">
-interface Service { id: string; name: string; description: string; durationMin: number; price: number }
+interface Service { id: string; name: string; description: string; durationMin: number; price: number; promoPrice: number | null; promoLabel: string | null }
 interface Barber { id: string; name: string; specialty?: string; photoUrl?: string | null }
 
 const { data: services } = await useFetch<Service[]>("/api/services");
@@ -35,7 +35,13 @@ const todayKey = `${todayValues.year}-${todayValues.month}-${todayValues.day}`;
 const calendarCursor = ref(new Date(Number(todayValues.year), Number(todayValues.month) - 1, 1));
 
 const selectedServices = computed(() => (services.value ?? []).filter((item) => selectedServiceIds.value.includes(item.id)));
-const total = computed(() => selectedServices.value.reduce((sum, item) => sum + item.price, 0));
+function effectivePrice(service: Service): number {
+  return service.promoPrice !== null && service.promoPrice < service.price ? service.promoPrice : service.price;
+}
+function formatPrice(value: number): string {
+  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
+}
+const total = computed(() => selectedServices.value.reduce((sum, item) => sum + effectivePrice(item), 0));
 const duration = computed(() => selectedServices.value.reduce((sum, item) => sum + item.durationMin, 0));
 
 const calendarDays = computed(() => {
@@ -133,7 +139,7 @@ async function finish(): Promise<void> {
       `Data/hora: ${new Date(appointment.scheduledAt).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })}`,
       `Barbeiro: ${barber?.name ?? "A confirmar"}`,
       `Serviços: ${selectedServices.value.map((item) => item.name).join(", ")}`,
-      paymentTiming.value === "PLANO" ? "Pagamento: crédito do plano" : `Total: R$ ${total.value.toFixed(2)}`,
+      paymentTiming.value === "PLANO" ? "Pagamento: crédito do plano" :       `Total: ${formatPrice(total.value)}`,
     ].join("\n");
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
   } catch (error: unknown) {
@@ -166,9 +172,10 @@ onMounted(async () => {
       <section v-if="step === 1" class="mt-6 border-2 border-(--border) bg-(--surface-bg) p-5 shadow-[8px_8px_0px_#09090B]">
         <h1 class="text-3xl font-black">1. Escolha o serviço</h1>
         <div class="mt-5 grid gap-4 md:grid-cols-2">
-          <label v-for="service in services" :key="service.id" class="flex min-h-32 cursor-pointer gap-3 border-2 border-(--border) p-4" :class="selectedServiceIds.includes(service.id) ? 'bg-[#F59E0B] text-[#09090B]' : 'bg-(--surface-bg)'">
+          <label v-for="service in services" :key="service.id" class="relative flex min-h-32 cursor-pointer gap-3 border-2 border-(--border) p-4" :class="selectedServiceIds.includes(service.id) ? 'bg-[#F59E0B] text-[#09090B]' : 'bg-(--surface-bg)'">
             <input v-model="selectedServiceIds" type="checkbox" :value="service.id" class="mt-1 h-6 w-6">
-            <span><strong class="block text-xl">{{ service.name }}</strong><span class="block">{{ service.description }}</span><span class="mt-2 block font-black">R$ {{ service.price.toFixed(2) }} · {{ service.durationMin }} min</span></span>
+            <span class="pr-16"><strong class="block text-xl">{{ service.name }}</strong><span class="block">{{ service.description }}</span><span class="mt-2 flex flex-wrap items-baseline gap-2 font-black"><span v-if="effectivePrice(service) < service.price" class="font-bold line-through opacity-60">{{ formatPrice(service.price) }}</span><span>{{ formatPrice(effectivePrice(service)) }}</span><span>· {{ service.durationMin }} min</span></span></span>
+            <span v-if="effectivePrice(service) < service.price" class="absolute right-2 top-2 border-2 border-[#09090B] bg-[#DC2626] px-2 py-1 text-xs font-black uppercase tracking-wider text-white">{{ service.promoLabel || "PROMOÇÃO" }}</span>
           </label>
         </div>
         <button type="button" class="mt-6 min-h-14 w-full border-2 border-[#09090B] bg-[#F59E0B] px-6 font-black text-[#09090B] shadow-[4px_4px_0px_#09090B]" :disabled="!selectedServiceIds.length" @click="step = 2">Continuar</button>
@@ -216,7 +223,7 @@ onMounted(async () => {
         <div class="mt-5 border-2 border-(--border) bg-(--muted-bg) p-4">
           <p><strong>Data:</strong> {{ new Date(selectedTime).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) }}</p>
           <p><strong>Serviços:</strong> {{ selectedServices.map((item) => item.name).join(", ") }}</p>
-          <p class="text-2xl font-black">Total: R$ {{ total.toFixed(2) }}</p>
+          <p class="text-2xl font-black">Total: {{ formatPrice(total) }}</p>
         </div>
         <label class="mt-5 flex min-h-14 items-center gap-3 border-2 border-(--border) p-3 font-bold"><input v-model="noConversation" type="checkbox" class="h-6 w-6"> Não quero conversar durante o atendimento</label>
         <label class="mt-4 block font-bold">Observações<textarea v-model="observations" class="mt-2 min-h-24 w-full border-2 border-(--border) p-3"></textarea></label>

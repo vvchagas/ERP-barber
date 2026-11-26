@@ -8,5 +8,6 @@ export default defineEventHandler(async () => {
   return services.map((service) => ({
     ...service,
     price: Number(service.price),
+    promoPrice: service.promoPrice === null ? null : Number(service.promoPrice),
   }));
 });

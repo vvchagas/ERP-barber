@@ -1,9 +1,9 @@
 <script setup lang="ts">
-const mode = ref<"login" | "create" | "admin">("login");
+const mode = ref<"login" | "create">("login");
 const showPassword = ref(false);
 const busy = ref(false);
 const message = ref("");
-const form = reactive({ name: "", email: "", phone: "", password: "", magicKey: "" });
+const form = reactive({ name: "", email: "", phone: "", password: "" });
 const config = useRuntimeConfig();
 const { refreshSession } = useCustomerAuth();
 const route = useRoute();
@@ -13,11 +13,6 @@ async function submit(): Promise<void> {
   busy.value = true;
   message.value = "";
   try {
-    if (mode.value === "admin") {
-      await $fetch("/api/admin/login", { method: "POST", body: { magicKey: form.magicKey, username: form.email, password: form.password } });
-      await navigateTo("/admin");
-      return;
-    }
     if (mode.value === "create") {
       if (!lgpdConsent.value) {
         message.value = "Marque o consentimento da Política de Privacidade para criar sua conta.";
@@ -76,50 +71,42 @@ function explainSocialSetup(provider: string): void {
         </div>
       </aside>
       <div class="p-6 lg:p-10">
-        <div class="mb-7 grid grid-cols-3 gap-2">
+        <div class="mb-7 grid grid-cols-2 gap-2">
           <button type="button" class="min-h-14 border-2 border-[#09090B] px-2 font-black" :class="mode === 'login' ? 'bg-[#F59E0B]' : 'bg-(--surface-bg)'" @click="mode = 'login'">Entrar</button>
           <button type="button" class="min-h-14 border-2 border-[#09090B] px-2 font-black" :class="mode === 'create' ? 'bg-[#F59E0B]' : 'bg-(--surface-bg)'" @click="mode = 'create'">Criar conta</button>
-          <button type="button" class="min-h-14 border-2 border-[#09090B] px-2 font-black" :class="mode === 'admin' ? 'bg-[#F59E0B]' : 'bg-(--surface-bg)'" @click="mode = 'admin'">Equipe</button>
         </div>
-        <h2 class="text-3xl font-black">{{ mode === "login" ? "Entre na sua conta" : mode === "create" ? "Cadastre-se" : "Acesso administrativo" }}</h2>
+        <h2 class="text-3xl font-black">{{ mode === "login" ? "Entre na sua conta" : "Cadastre-se" }}</h2>
         <Transition name="login-switch" mode="out-in">
         <form :key="mode" class="mt-5" @submit.prevent="submit">
         <label v-if="mode === 'create'" class="block font-black">Nome completo
           <input v-model="form.name" required autocomplete="name" class="mt-2 min-h-14 w-full border-2 border-(--border) px-3">
         </label>
-        <label class="mt-4 block font-black">{{ mode === "admin" ? "Usuário" : "E-mail" }}
-          <input v-model="form.email" :type="mode === 'admin' ? 'text' : 'email'" required autocomplete="username" class="mt-2 min-h-14 w-full border-2 border-(--border)">
+        <label class="mt-4 block font-black">E-mail
+          <input v-model="form.email" type="email" required autocomplete="username" class="mt-2 min-h-14 w-full border-2 border-(--border)">
         </label>
         <label v-if="mode === 'create'" class="mt-4 block font-black">Telefone / WhatsApp
           <input v-model="form.phone" required type="tel" autocomplete="tel" class="mt-2 min-h-14 w-full border-2 border-(--border) px-3">
         </label>
-        <label v-if="mode !== 'admin'" class="mt-4 block font-black">Senha
+        <label class="mt-4 block font-black">Senha
           <span class="mt-2 flex">
-            <input v-model="form.password" :type="showPassword ? 'text' : 'password'" required autocomplete="current-password" class="min-h-14 w-full border-2 border-r-0 border-(--border)">
+            <input v-model="form.password" :type="showPassword ? 'text' : 'password'" required :autocomplete="mode === 'create' ? 'new-password' : 'current-password'" class="min-h-14 w-full border-2 border-r-0 border-(--border)">
             <button type="button" class="min-h-14 border-2 border-(--border) px-3 font-black" @click="showPassword = !showPassword">{{ showPassword ? "Ocultar" : "Ver" }}</button>
           </span>
-        </label>
-        <label v-if="mode === 'admin'" class="mt-4 block font-black">MAGIC KEY
-          <input v-model="form.magicKey" type="password" required class="mt-2 min-h-14 w-full border-2 border-(--border) px-3">
-        </label>
-        <label v-if="mode === 'admin'" class="mt-4 block font-black">Senha
-          <input v-model="form.password" type="password" required class="mt-2 min-h-14 w-full border-2 border-(--border) px-3">
         </label>
         <label v-if="mode === 'create'" class="mt-5 flex items-start gap-3 font-bold">
           <input v-model="lgpdConsent" type="checkbox" required class="mt-1 h-6 w-6">
           <span>Li e aceito a <NuxtLink to="/privacidade" class="underline">Política de Privacidade</NuxtLink> para uso dos dados no cadastro e atendimento.</span>
         </label>
-        <div v-if="mode !== 'admin'" class="mt-5 grid gap-3">
+        <div class="mt-5 grid gap-3">
           <button v-if="config.public.googleClientId" type="button" class="min-h-14 border-2 border-(--border) bg-(--surface-bg) px-4 font-black" @click="explainSocialSetup('Google')">Continuar com Google</button>
           <button v-if="config.public.appleClientId" type="button" class="min-h-14 border-2 border-(--border) bg-(--surface-bg) px-4 font-black" @click="explainSocialSetup('Apple')">Continuar com Apple</button>
         </div>
         <p v-if="message" role="status" class="mt-5 border-2 border-(--border) p-3 font-bold">{{ message }}</p>
         <button type="submit" class="mt-6 min-h-14 w-full border-2 border-[#09090B] bg-[#F59E0B] px-4 font-black shadow-[4px_4px_0px_#09090B]" :disabled="busy">
-          {{ busy ? "Aguarde..." : mode === "login" ? "Entrar" : mode === "create" ? "Criar conta" : "Acessar painel" }}
+          {{ busy ? "Aguarde..." : mode === "login" ? "Entrar" : "Criar conta" }}
         </button>
         </form>
         </Transition>
-        <p class="mt-5 text-center text-sm font-bold">Acesso da equipe protegido por MAGIC_KEY e senha administrativa.</p>
       </div>
     </section>
   </main>

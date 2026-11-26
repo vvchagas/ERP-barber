@@ -5,6 +5,8 @@ interface ServiceCard {
   description: string;
   durationMin: number;
   price: number;
+  promoPrice: number | null;
+  promoLabel: string | null;
 }
 interface BarberCard {
   id: string;
@@ -16,7 +18,11 @@ interface BarberCard {
 
 const { data: services } = await useFetch<ServiceCard[]>("/api/services");
 const { data: barbers } = await useFetch<BarberCard[]>("/api/barbers");
-const { data: plans } = await useFetch<Array<{ id: string; name: string; description: string; price: number }>>("/api/plans");
+const { data: plans } = await useFetch<Array<{ id: string; name: string; description: string; price: number; promoPrice: number | null; promoLabel: string | null }>>("/api/plans");
+
+function formatPrice(value: number): string {
+  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
+}
 </script>
 
 <template>
@@ -99,11 +105,15 @@ const { data: plans } = await useFetch<Array<{ id: string; name: string; descrip
           <article
             v-for="service in services"
             :key="service.id"
-            class="border-2 border-[#09090B] bg-white p-5 shadow-[4px_4px_0px_#09090B]"
+            class="relative border-2 border-[#09090B] bg-white p-5 text-[#09090B] shadow-[4px_4px_0px_#09090B]"
           >
+            <span v-if="service.promoPrice !== null && service.promoPrice < service.price" class="absolute right-2 top-2 border-2 border-[#09090B] bg-[#DC2626] px-2 py-1 text-xs font-black uppercase tracking-wider text-white">{{ service.promoLabel || "PROMOÇÃO" }}</span>
             <h3 class="text-xl font-black">{{ service.name }}</h3>
             <p class="mt-2 min-h-12">{{ service.description || `${service.durationMin} minutos de atendimento` }}</p>
-            <p class="mt-4 text-2xl font-black text-[#EA580C]">R$ {{ service.price.toFixed(2) }}</p>
+            <div class="mt-4 flex flex-wrap items-baseline gap-2">
+              <span v-if="service.promoPrice !== null && service.promoPrice < service.price" class="font-bold line-through opacity-60">{{ formatPrice(service.price) }}</span>
+              <p class="text-2xl font-black">{{ formatPrice(service.promoPrice !== null && service.promoPrice < service.price ? service.promoPrice : service.price) }}</p>
+            </div>
             <p class="mt-1 font-bold">{{ service.durationMin }} MIN</p>
           </article>
           <article
@@ -121,11 +131,15 @@ const { data: plans } = await useFetch<Array<{ id: string; name: string; descrip
           <article
             v-for="plan in plans"
             :key="plan.id"
-            class="border-2 border-[#09090B] bg-[#F59E0B] p-6 shadow-[8px_8px_0px_#09090B]"
+            class="relative border-2 border-[#09090B] bg-[#F59E0B] p-6 text-[#09090B] shadow-[8px_8px_0px_#09090B]"
           >
+            <span v-if="plan.promoPrice !== null && plan.promoPrice < plan.price" class="absolute right-2 top-2 border-2 border-[#09090B] bg-[#DC2626] px-2 py-1 text-xs font-black uppercase tracking-wider text-white">{{ plan.promoLabel || "PROMOÇÃO" }}</span>
             <h3 class="text-2xl font-black">{{ plan.name }}</h3>
             <p class="mt-3">{{ plan.description }}</p>
-            <p class="mt-4 text-3xl font-black">R$ {{ plan.price.toFixed(2) }}/MÊS</p>
+            <div class="mt-4 flex flex-wrap items-baseline gap-2">
+              <span v-if="plan.promoPrice !== null && plan.promoPrice < plan.price" class="font-bold line-through opacity-70">{{ formatPrice(plan.price) }}</span>
+              <p class="text-3xl font-black">{{ formatPrice(plan.promoPrice !== null && plan.promoPrice < plan.price ? plan.promoPrice : plan.price) }}/MÊS</p>
+            </div>
             <NuxtLink to="/planos" class="mt-5 inline-flex min-h-12 items-center border-2 border-[#09090B] bg-white px-4 font-black shadow-[4px_4px_0px_#09090B]">Ver plano</NuxtLink>
           </article>
         </div>

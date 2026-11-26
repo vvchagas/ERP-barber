@@ -7,7 +7,7 @@ import { createCustomerSession } from "../../utils/adminSession";
 const bodySchema = z.object({
   email: z.string().trim().email(),
   password: z.string().min(8).max(128),
-});
+}).strict();
 
 export default defineEventHandler(async (event) => {
   const ip = getRequestIP(event) || "unknown";
@@ -23,6 +23,10 @@ export default defineEventHandler(async (event) => {
   });
   if (!customer?.passwordHash || !customer.passwordSalt || !verifyPassword(result.data.password, customer.passwordSalt, customer.passwordHash)) {
     throw createError({ statusCode: 401, statusMessage: "E-mail ou senha inválidos" });
+  }
+  const ownerEmail = process.env.OWNER_EMAIL?.trim().toLowerCase();
+  if (ownerEmail && customer.email?.trim().toLowerCase() === ownerEmail && customer.role !== "ADMIN") {
+    await prisma.customer.update({ where: { id: customer.id }, data: { role: "ADMIN" } });
   }
   createCustomerSession(event, customer.phone);
   return { authenticated: true };

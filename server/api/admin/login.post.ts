@@ -1,24 +1,18 @@
 import { z } from "zod";
-import { createHash, timingSafeEqual } from "node:crypto";
 import { prisma } from "../../utils/prisma";
 import { consumeRateLimit } from "../../utils/rateLimit";
-import { verifyPassword } from "../../utils/password";
 import { writeAccessLog } from "../../utils/accessLog";
-import { createAdminSession } from "../../utils/adminSession";
+import { createAdminSession, getCustomerSessionPhone } from "../../utils/adminSession";
+import { magicKeyMatches, secretMatches } from "../../utils/magicKey";
 
 const bodySchema = z.object({
-  magicKey: z.string().min(1),
-  username: z.string().trim().min(1),
-  password: z.string().min(1),
-});
-
-function safeMagicKeyMatches(value: string): boolean {
-  const expected = process.env.MAGIC_KEY;
-  if (!expected) return false;
-  const valueDigest = createHash("sha256").update(value).digest();
-  const expectedDigest = createHash("sha256").update(expected).digest();
-  return timingSafeEqual(valueDigest, expectedDigest);
-}
+  username: z.string().trim().min(1).max(200).optional(),
+  password: z.string().min(1).max(512).optional(),
+  magicKey: z.string().min(1).max(512).optional(),
+}).strict().refine((body) => (
+  (body.username && body.password && !body.magicKey)
+  || (body.magicKey && !body.username && !body.password)
+), "Informe usuário e senha, ou a chave alternativa.");
 
 export default defineEventHandler(async (event) => {
   const ip = getRequestIP(event) || "unknown";
@@ -35,23 +29,29 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: "Dados inválidos" });
   }
 
-  if (!safeMagicKeyMatches(parsed.data.magicKey)) {
-    await writeAccessLog(event, false, "invalid_magic_key", parsed.data.username);
+  const phone = getCustomerSessionPhone(event);
+  const customer = phone
+    ? await prisma.customer.findUnique({ where: { phone }, select: { id: true, email: true, role: true } })
+    : null;
+  if (!customer || customer.role !== "ADMIN") {
+    await writeAccessLog(event, false, "admin_customer_session_required");
+    throw createError({ statusCode: 401, statusMessage: "Entre com uma conta administradora antes de continuar" });
+  }
+
+  const username = process.env.ADMIN_USER;
+  const password = process.env.ADMIN_PASSWORD;
+  const credentialsValid = parsed.data.username !== undefined
+    && parsed.data.password !== undefined
+    && secretMatches(parsed.data.username, username)
+    && secretMatches(parsed.data.password, password);
+  const fallbackValid = parsed.data.magicKey !== undefined
+    && magicKeyMatches(parsed.data.magicKey);
+  if (!credentialsValid && !fallbackValid) {
+    await writeAccessLog(event, false, "invalid_admin_credentials", customer.email ?? undefined);
     throw createError({ statusCode: 401, statusMessage: "Credenciais inválidas" });
   }
 
-  const admin = await prisma.adminUser.findUnique({
-    where: { username: parsed.data.username },
-  });
-  if (
-    !admin ||
-    !verifyPassword(parsed.data.password, admin.passwordSalt, admin.passwordHash)
-  ) {
-    await writeAccessLog(event, false, "invalid_password", parsed.data.username);
-    throw createError({ statusCode: 401, statusMessage: "Credenciais inválidas" });
-  }
-
-  await writeAccessLog(event, true, "login_success", admin.username);
-  createAdminSession(event, admin.username);
+  await writeAccessLog(event, true, "login_success", customer.email ?? username);
+  createAdminSession(event, customer.id, customer.email ?? username ?? "admin");
   return { unlocked: true };
 });

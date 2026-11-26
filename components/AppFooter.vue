@@ -2,7 +2,7 @@
   <footer class="border-t-2 border-[#09090B] bg-[#09090B] px-4 py-10 text-white">
     <div class="mx-auto grid max-w-7xl gap-8 md:grid-cols-2 lg:grid-cols-4">
       <section>
-        <img src="/favicon.ico" alt="NAVALHA & CORTE" class="h-11 w-auto">
+        <img src="/logo-navalha-corte.svg" alt="NAVALHA & CORTE" class="h-11 w-auto">
         <p class="mt-4 max-w-xs">Corte certo, atendimento claro e agendamento simples.</p>
       </section>
       <section>

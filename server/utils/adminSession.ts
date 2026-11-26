@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import type { H3Event } from "h3";
 import { getCookie, setCookie, deleteCookie } from "h3";
+import { prisma } from "./prisma";
 
 const COOKIE_NAME = "admin_session";
 const SESSION_SECONDS = 60 * 60 * 8;
@@ -17,9 +18,9 @@ function sign(payload: string): string {
   return createHmac("sha256", secret()).update(payload).digest("base64url");
 }
 
-export function createAdminSession(event: H3Event, username: string): void {
+export function createAdminSession(event: H3Event, customerId: string, username: string): void {
   const expiresAt = Math.floor(Date.now() / 1000) + SESSION_SECONDS;
-  const payload = Buffer.from(JSON.stringify({ username, expiresAt })).toString("base64url");
+  const payload = Buffer.from(JSON.stringify({ customerId, username, expiresAt })).toString("base64url");
   const signature = sign(payload);
 
   setCookie(event, COOKIE_NAME, `${payload}.${signature}`, {
@@ -31,11 +32,11 @@ export function createAdminSession(event: H3Event, username: string): void {
   });
 }
 
-export function isAdminSessionValid(event: H3Event): boolean {
+function getAdminSessionClaims(event: H3Event): { customerId: string; username: string } | null {
   const token = getCookie(event, COOKIE_NAME);
-  if (!token) return false;
+  if (!token) return null;
   const separator = token.lastIndexOf(".");
-  if (separator <= 0) return false;
+  if (separator <= 0) return null;
 
   const payload = token.slice(0, separator);
   const signature = token.slice(separator + 1);
@@ -43,29 +44,50 @@ export function isAdminSessionValid(event: H3Event): boolean {
   try {
     expected = sign(payload);
   } catch {
-    return false;
+    return null;
   }
   const signatureBuffer = Buffer.from(signature);
   const expectedBuffer = Buffer.from(expected);
-  if (signatureBuffer.length !== expectedBuffer.length) return false;
-  if (!timingSafeEqual(signatureBuffer, expectedBuffer)) return false;
+  if (signatureBuffer.length !== expectedBuffer.length) return null;
+  if (!timingSafeEqual(signatureBuffer, expectedBuffer)) return null;
 
   try {
     const data = JSON.parse(
       Buffer.from(payload, "base64url").toString("utf8"),
-    ) as { username?: unknown; expiresAt?: unknown };
-    return (
-      typeof data.username === "string" &&
-      typeof data.expiresAt === "number" &&
-      data.expiresAt > Math.floor(Date.now() / 1000)
-    );
+    ) as { customerId?: unknown; username?: unknown; expiresAt?: unknown };
+    if (
+      typeof data.customerId !== "string" ||
+      typeof data.username !== "string" ||
+      typeof data.expiresAt !== "number" ||
+      data.expiresAt <= Math.floor(Date.now() / 1000)
+    ) return null;
+    return { customerId: data.customerId, username: data.username };
   } catch {
-    return false;
+    return null;
   }
 }
 
-export function requireAdminSession(event: H3Event): void {
-  if (!isAdminSessionValid(event)) {
+export async function isAdminSessionValid(event: H3Event): Promise<boolean> {
+  const claims = getAdminSessionClaims(event);
+  if (!claims) return false;
+  const customer = await prisma.customer.findUnique({
+    where: { id: claims.customerId },
+    select: { role: true, email: true },
+  });
+  return customer?.role === "ADMIN";
+}
+
+export async function requireAdminSession(event: H3Event): Promise<void> {
+  const claims = getAdminSessionClaims(event);
+  if (!claims) {
+    throw createError({ statusCode: 404, statusMessage: "Página não encontrada" });
+  }
+  const customer = await prisma.customer.findUnique({
+    where: { id: claims.customerId },
+    select: { role: true },
+  });
+  if (customer?.role !== "ADMIN") {
+    clearAdminSession(event);
     throw createError({ statusCode: 404, statusMessage: "Página não encontrada" });
   }
 }

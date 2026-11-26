@@ -1,6 +1,6 @@
 <script setup lang="ts">
 type Method = "PIX" | "CREDITO" | "DEBITO";
-interface Plan { id: string; name: string; price: number; description: string }
+interface Plan { id: string; name: string; price: number; promoPrice: number | null; promoLabel: string | null; description: string }
 interface AppointmentDetails {
   id: string;
   scheduledAt: string;
@@ -28,7 +28,9 @@ const { customer, refreshSession } = useCustomerAuth();
 
 const selectedPlan = computed(() => plans.value.find((plan) => plan.id === selectedPlanId.value) ?? null);
 const isSubscription = computed(() => Boolean(selectedPlan.value));
-const amount = computed(() => isSubscription.value ? selectedPlan.value?.price ?? 0 : appointment.value?.total ?? 0);
+const amount = computed(() => isSubscription.value
+  ? effectivePlanPrice(selectedPlan.value)
+  : appointment.value?.total ?? 0);
 const confirmed = computed(() => paymentStatus.value === "CONFIRMADO");
 const pending = computed(() => paymentStatus.value === "PENDENTE");
 
@@ -79,6 +81,14 @@ function sendWhatsApp(): void {
   if (!confirmed.value) return;
   const message = `Olá! Meu pagamento foi confirmado. Código: ${routeId}`;
   window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
+}
+
+function effectivePlanPrice(plan: Plan | null): number {
+  if (!plan) return 0;
+  return plan.promoPrice !== null && plan.promoPrice < plan.price ? plan.promoPrice : plan.price;
+}
+function formatPrice(value: number): string {
+  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 }
 
 onMounted(async () => {
@@ -134,13 +144,18 @@ onMounted(async () => {
               <label class="mt-5 block font-black">Ou inclua um Plano VIP
                 <select v-model="selectedPlanId" class="mt-2 min-h-14 w-full border-2 border-(--border) bg-(--surface-bg) px-3">
                   <option value="">Não incluir plano</option>
-                  <option v-for="plan in plans" :key="plan.id" :value="plan.id">{{ plan.name }} — R$ {{ plan.price.toFixed(2) }}</option>
+                  <option v-for="plan in plans" :key="plan.id" :value="plan.id">{{ plan.name }} — {{ formatPrice(effectivePlanPrice(plan)) }}</option>
                 </select>
               </label>
               <p v-if="selectedPlan" class="mt-3 border-2 border-(--border) bg-[#F4F4F5] p-3 font-bold">{{ selectedPlan.description }}</p>
+              <p v-if="selectedPlan && selectedPlan.promoPrice !== null && selectedPlan.promoPrice < selectedPlan.price" class="mt-3 border-2 border-[#09090B] bg-[#FEF3C7] p-3 font-black text-[#09090B]">
+                <span class="border-2 border-[#09090B] bg-[#DC2626] px-2 py-1 text-xs uppercase tracking-wider text-white">{{ selectedPlan.promoLabel || "PROMOÇÃO" }}</span>
+                <span class="ml-2 line-through opacity-60">{{ formatPrice(selectedPlan.price) }}</span>
+                <span class="ml-2">{{ formatPrice(selectedPlan.promoPrice) }}</span>
+              </p>
             </div>
             <footer class="border-t-2 border-dashed border-(--border) bg-(--muted-bg) p-5">
-              <p class="flex justify-between text-xl font-black"><span>Total</span><span>R$ {{ amount.toFixed(2) }}</span></p>
+              <p class="flex justify-between text-xl font-black"><span>Total</span><span>{{ formatPrice(amount) }}</span></p>
             </footer>
           </section>
           <aside class="h-fit border-2 border-(--border) bg-(--surface-bg) p-5 shadow-[8px_8px_0px_#09090B]">

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { prisma } from "../../utils/prisma";
 import { createCustomerSession } from "../../utils/adminSession";
+import { createAdminNotification } from "../../utils/adminNotifications";
 
 const bodySchema = z.object({
   customerName: z.string().trim().min(2).max(100),
@@ -87,6 +88,10 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 409, statusMessage: "Este horário acabou de ser ocupado" });
     }
 
+    const existingCustomer = await tx.customer.findUnique({
+      where: { phone: data.customerPhone },
+      select: { id: true },
+    });
     const customer = await tx.customer.upsert({
       where: { phone: data.customerPhone },
       update: { name: data.customerName, email: data.customerEmail, lgpdConsentAt: new Date(), notes: data.notes },
@@ -131,12 +136,29 @@ export default defineEventHandler(async (event) => {
           create: services.map((service) => ({
             serviceId: service.id,
             quantity: 1,
-            unitPrice: service.price,
+            unitPrice: service.promoPrice !== null
+              && Math.round(Number(service.promoPrice) * 100) < Math.round(Number(service.price) * 100)
+              ? service.promoPrice
+              : service.price,
           })),
         },
       },
       include: { customer: true, barber: true, services: { include: { service: true } } },
     });
+    if (!existingCustomer) {
+      await createAdminNotification({
+        type: "CUSTOMER_NEW",
+        title: "Novo cadastro de cliente",
+        message: `${customer.name} realizou o primeiro agendamento.`,
+        metadata: { customerId: customer.id },
+      }, tx);
+    }
+    await createAdminNotification({
+      type: "APPOINTMENT_NEW",
+      title: "Novo agendamento",
+      message: `${customer.name} agendou com ${appointment.barber.name}.`,
+      metadata: { appointmentId: appointment.id, customerId: customer.id },
+    }, tx);
     createCustomerSession(event, customer.phone);
 
     return {

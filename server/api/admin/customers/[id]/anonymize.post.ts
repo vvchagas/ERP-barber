@@ -7,7 +7,7 @@ import { writeAccessLog } from "../../../../utils/accessLog";
 const paramSchema = z.object({ id: z.string().min(1).max(191) });
 
 export default defineEventHandler(async (event) => {
-  requireAdminSession(event);
+  await requireAdminSession(event);
   const params = paramSchema.safeParse(getRouterParam(event, "id") ? { id: getRouterParam(event, "id") } : {});
   if (!params.success) throw createError({ statusCode: 400, statusMessage: "Cliente inválido" });
 

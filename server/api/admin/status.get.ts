@@ -1,5 +1,5 @@
 import { isAdminSessionValid } from "../../utils/adminSession";
 
-export default defineEventHandler((event) => ({
-  unlocked: isAdminSessionValid(event),
+export default defineEventHandler(async (event) => ({
+  unlocked: await isAdminSessionValid(event),
 }));

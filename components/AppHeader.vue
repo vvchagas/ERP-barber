@@ -16,7 +16,6 @@ const links = [
   { label: "Início", to: "/" },
   { label: "Agendar", to: "/agendamento" },
   { label: "Planos VIP", to: "/planos" },
-  { label: "Caixa", to: "/caixa" },
   { label: "Configurações", to: "/configuracoes" },
 ];
 
